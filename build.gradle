@@ -323,9 +323,24 @@ project(':iceberg-common') {
 }
 
 project(':iceberg-core') {
+  apply plugin: 'scala'
+  apply plugin: 'java-library'
+
   test {
     useJUnitPlatform()
   }
+
+  sourceSets {
+    main {
+      scala {
+        srcDirs = ['src/main/scala', 'src/main/java']
+      }
+      java {
+        srcDirs = []
+      }
+    }
+  }
+
   dependencies {
     api project(':iceberg-api')
     implementation project(':iceberg-common')
@@ -337,6 +352,7 @@ project(':iceberg-core') {
       exclude group: 'org.tukaani' // xz compression is not supported
     }
 
+    implementation 'org.scala-lang:scala-library:2.13.11'
     implementation libs.aircompressor
     implementation libs.httpcomponents.httpclient5
     implementation platform(libs.jackson.bom)
