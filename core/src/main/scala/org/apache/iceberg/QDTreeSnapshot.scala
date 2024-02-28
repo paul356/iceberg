@@ -21,10 +21,11 @@ package org.apache.iceberg
 import scala.jdk.CollectionConverters._
 import java.lang.Integer
 import java.lang.{Iterable => JIterable}
-import java.util.{List => JList}
 import java.lang.{Long => JLong}
+import java.util.{List => JList}
 import java.util.{Map => JMap}
 import org.apache.iceberg.io.FileIO
+import org.apache.iceberg.util.PersistentMap
 
 class QDTreeSnapshot(
   val sequenceNumber: Long,
@@ -35,12 +36,14 @@ class QDTreeSnapshot(
   val summary: JMap[String, String],
   val manifestListLocation: String,
   override val schemaId: Integer) extends Snapshot {
+  private val metastore: PersistentMap = PersistentMap.instance
   override def allManifests(io: FileIO): JList[ManifestFile] = {
-    throw new UnsupportedOperationException(classOf[QDTreeSnapshot].getName)
+    dataManifests(io)
   }
 
   override def dataManifests(io: FileIO): JList[ManifestFile] = {
-    throw new UnsupportedOperationException(classOf[QDTreeSnapshot].getName)
+    val lst: List[ManifestFile] = List(new QDTreeManifestFile(sequenceNumber, snapshotId, metastore))
+    lst.asJava
   }
 
   override def deleteManifests(io: FileIO): JList[ManifestFile] = {
