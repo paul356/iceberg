@@ -147,28 +147,28 @@ public class SnapshotParser {
     if (node.has(MANIFEST_LIST)) {
       // the manifest list is stored in a manifest list file
       String manifestList = JsonUtil.getString(MANIFEST_LIST, node);
-      return new QDTreeSnapshot(
+      return new BaseSnapshot(
           sequenceNumber,
           snapshotId,
           parentId,
           timestamp,
           operation,
           summary,
-          manifestList,
-          schemaId);
+          schemaId,
+          manifestList);
 
     } else {
       // fall back to an embedded manifest list. pass in the manifest's InputFile so length can be
       // loaded lazily, if it is needed
-      return new QDTreeSnapshot(
+      return new BaseSnapshot(
           sequenceNumber,
           snapshotId,
           parentId,
           timestamp,
           operation,
           summary,
-          JsonUtil.getStringList(MANIFESTS, node).toArray(new String[0])[0],
-          schemaId);
+          schemaId,
+          JsonUtil.getStringList(MANIFESTS, node).toArray(new String[0]));
     }
   }
 
