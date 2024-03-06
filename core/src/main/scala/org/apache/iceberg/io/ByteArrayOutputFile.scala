@@ -23,7 +23,7 @@ class ByteArrayOutputFile extends OutputFile {
 
     override def write(b: Array[Byte], off: Int, len: Int) = {
       byteArrayStream.write(b, off, len)
-      offset = off + len
+      offset += len
     }
 
     override def write(b: Int) = {
@@ -36,6 +36,7 @@ class ByteArrayOutputFile extends OutputFile {
 
   private var positionStream: ByteArrayPositionOutputStream = null
 
+  @throws(classOf[AlreadyExistsException])
   override def create: PositionOutputStream = {
     if (positionStream != null) {
       throw new AlreadyExistsException("An output stream already exists")

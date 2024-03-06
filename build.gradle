@@ -339,6 +339,14 @@ project(':iceberg-core') {
         srcDirs = []
       }
     }
+    test {
+      scala {
+        srcDirs = ['src/test/scala', 'src/test/java']
+      }
+      java {
+        srcDirs = []
+      }
+    }
   }
 
   dependencies {
