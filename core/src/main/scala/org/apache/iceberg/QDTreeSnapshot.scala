@@ -42,8 +42,7 @@ class QDTreeSnapshot(
   }
 
   override def dataManifests(io: FileIO): JList[ManifestFile] = {
-    val lst: List[ManifestFile] = List(new QDTreeManifestFile(sequenceNumber, snapshotId, metastore))
-    lst.asJava
+    throw new UnsupportedOperationException(classOf[QDTreeSnapshot].getName)
   }
 
   override def deleteManifests(io: FileIO): JList[ManifestFile] = {
