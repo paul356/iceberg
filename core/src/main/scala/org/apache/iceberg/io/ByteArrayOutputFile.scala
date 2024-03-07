@@ -57,4 +57,6 @@ class ByteArrayOutputFile extends OutputFile {
     val arr = positionStream.toByteArray
     new ByteArrayInputFile(arr)
   }
+
+  def toByteArray: Array[Byte] = positionStream.toByteArray
 }

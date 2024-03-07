@@ -24,7 +24,9 @@ import java.lang.{Iterable => JIterable}
 import java.lang.{Long => JLong}
 import java.util.{List => JList}
 import java.util.{Map => JMap}
+import org.apache.iceberg.io.ByteArrayInputFile
 import org.apache.iceberg.io.FileIO
+import org.apache.iceberg.util.MapKey
 import org.apache.iceberg.util.PersistentMap
 
 class QDTreeSnapshot(
@@ -36,17 +38,18 @@ class QDTreeSnapshot(
   val summary: JMap[String, String],
   val manifestListLocation: String,
   override val schemaId: Integer) extends Snapshot {
-  private val metastore: PersistentMap = PersistentMap.instance
+  private val metaStore: PersistentMap = PersistentMap.instance
+
   override def allManifests(io: FileIO): JList[ManifestFile] = {
     dataManifests(io)
   }
 
   override def dataManifests(io: FileIO): JList[ManifestFile] = {
-    throw new UnsupportedOperationException(classOf[QDTreeSnapshot].getName)
+    dataManifestFile
   }
 
   override def deleteManifests(io: FileIO): JList[ManifestFile] = {
-    throw new UnsupportedOperationException(classOf[QDTreeSnapshot].getName)
+    deleteManifestFile
   }
 
   override def addedDataFiles(io: FileIO): JIterable[DataFile] = {
@@ -63,5 +66,28 @@ class QDTreeSnapshot(
 
   override def removedDeleteFiles(io: FileIO): JIterable[DeleteFile] = {
     List.empty[DeleteFile].asJava
+  }
+
+  private lazy val dataManifestFile = {
+    val valBytes = metaStore.getVal(QDTreeSnapshot.dataManifestFileKey(sequenceNumber))
+    ManifestLists.read(new ByteArrayInputFile(valBytes))
+  }
+
+  private lazy val deleteManifestFile = {
+    val valBytes = metaStore.getVal(QDTreeSnapshot.deleteManifestFileKey(sequenceNumber))
+    ManifestLists.read(new ByteArrayInputFile(valBytes))
+  }
+}
+
+object QDTreeSnapshot {
+  val dataManifestFileKeyTemplate = "manifestfile-%d-data"
+  val deleteManifestFileKeyTemplate = "manifestfile-%d-delete"
+
+  def dataManifestFileKey(sequenceNumber: Long): MapKey = {
+    new MapKey(dataManifestFileKeyTemplate.format(sequenceNumber).getBytes, sequenceNumber)
+  }
+
+  def deleteManifestFileKey(sequenceNumber: Long): MapKey = {
+    new MapKey(deleteManifestFileKeyTemplate.format(sequenceNumber).getBytes, sequenceNumber)
   }
 }
