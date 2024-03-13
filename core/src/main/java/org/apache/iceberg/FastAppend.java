@@ -20,6 +20,8 @@ package org.apache.iceberg;
 
 import static org.apache.iceberg.TableProperties.SNAPSHOT_ID_INHERITANCE_ENABLED;
 import static org.apache.iceberg.TableProperties.SNAPSHOT_ID_INHERITANCE_ENABLED_DEFAULT;
+import static org.apache.iceberg.TableProperties.MANIFEST_IN_KVDB;
+import static org.apache.iceberg.TableProperties.MANIFEST_IN_KVDB_DEFAULT;
 
 import java.io.IOException;
 import java.util.List;
@@ -51,6 +53,7 @@ class FastAppend extends SnapshotProducer<AppendFiles> implements AppendFiles {
   private final List<ManifestFile> rewrittenAppendManifests = Lists.newArrayList();
   private List<ManifestFile> newManifests = null;
   private boolean hasNewFiles = false;
+  private boolean manifestInKvdb = false;
 
   FastAppend(String tableName, TableOperations ops) {
     super(ops);
@@ -61,6 +64,8 @@ class FastAppend extends SnapshotProducer<AppendFiles> implements AppendFiles {
         ops.current()
             .propertyAsBoolean(
                 SNAPSHOT_ID_INHERITANCE_ENABLED, SNAPSHOT_ID_INHERITANCE_ENABLED_DEFAULT);
+    this.manifestInKvdb =
+      ops.current().propertyAsBoolean(MANIFEST_IN_KVDB, MANIFEST_IN_KVDB_DEFAULT);
   }
 
   @Override
@@ -207,7 +212,7 @@ class FastAppend extends SnapshotProducer<AppendFiles> implements AppendFiles {
     }
 
     if (newManifests == null && newFiles.size() > 0) {
-      RollingManifestWriter<DataFile> writer = newRollingManifestWriter(spec);
+      ManifestEntryAppender<DataFile> writer = newRollingManifestWriter(spec);
       try {
         newFiles.forEach(writer::add);
       } finally {
