@@ -13,8 +13,7 @@ abstract class QDTreeManifestEntry[F <: ContentFile[F]](
   var snapshotId: Option[Long],
   var dataSequenceNumber: Option[Long],
   var fileSequenceNumber: Option[Long],
-  val dataSet: List[F]
-){
+  val dataSet: List[F]) {
   def isLive: Boolean = {
     status == Status.ADDED || status == Status.EXISTING
   }

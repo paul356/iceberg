@@ -151,7 +151,7 @@ class FastAppend extends SnapshotProducer<AppendFiles> implements AppendFiles {
     List<ManifestFile> manifests = Lists.newArrayList();
 
     try {
-      List<ManifestFile> newWrittenManifests = writeNewManifests();
+      List<ManifestFile> newWrittenManifests = writeNewManifests(base);
       if (newWrittenManifests != null) {
         manifests.addAll(newWrittenManifests);
       }
@@ -205,14 +205,19 @@ class FastAppend extends SnapshotProducer<AppendFiles> implements AppendFiles {
     }
   }
 
-  private List<ManifestFile> writeNewManifests() throws IOException {
+  private List<ManifestFile> writeNewManifests(TableMetadata base) throws IOException {
     if (hasNewFiles && newManifests != null) {
       newManifests.forEach(file -> deleteFile(file.path()));
       newManifests = null;
     }
 
     if (newManifests == null && newFiles.size() > 0) {
-      ManifestEntryAppender<DataFile> writer = newRollingManifestWriter(spec);
+      ManifestEntryAppender<DataFile> writer;
+      if (manifestInKvdb) {
+        writer = QDTreeManifestEntryWriter.apply(base.nextSequenceNumber());
+      } else {
+        writer = newRollingManifestWriter(spec);
+      }
       try {
         newFiles.forEach(writer::add);
       } finally {
