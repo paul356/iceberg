@@ -26,6 +26,7 @@ import java.util.{List => JList}
 import java.util.{Map => JMap}
 import org.apache.iceberg.io.ByteArrayInputFile
 import org.apache.iceberg.io.FileIO
+import org.apache.iceberg.util.KeyType
 import org.apache.iceberg.util.MapKey
 import org.apache.iceberg.util.PersistentMap
 
@@ -84,10 +85,10 @@ object QDTreeSnapshot {
   val deleteManifestFileKeyTemplate = "manifestfile-%d-delete"
 
   def dataManifestFileKey(sequenceNumber: Long): MapKey = {
-    new MapKey(dataManifestFileKeyTemplate.format(sequenceNumber).getBytes, sequenceNumber)
+    new MapKey(KeyType.ByteArray, dataManifestFileKeyTemplate.format(sequenceNumber).getBytes, sequenceNumber)
   }
 
   def deleteManifestFileKey(sequenceNumber: Long): MapKey = {
-    new MapKey(deleteManifestFileKeyTemplate.format(sequenceNumber).getBytes, sequenceNumber)
+    new MapKey(KeyType.ByteArray, deleteManifestFileKeyTemplate.format(sequenceNumber).getBytes, sequenceNumber)
   }
 }
