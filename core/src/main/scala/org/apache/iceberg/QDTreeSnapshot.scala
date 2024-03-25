@@ -85,10 +85,10 @@ object QDTreeSnapshot {
   val deleteManifestFileKeyTemplate = "manifestfile-%d-delete"
 
   def dataManifestFileKey(sequenceNumber: Long): MapKey = {
-    new MapKey(KeyType.ByteArray, dataManifestFileKeyTemplate.format(sequenceNumber).getBytes, sequenceNumber)
+    new MapKey(domain = KeyType.ByteArray, bytes = dataManifestFileKeyTemplate.format(sequenceNumber).getBytes, snapSequence = sequenceNumber)
   }
 
   def deleteManifestFileKey(sequenceNumber: Long): MapKey = {
-    new MapKey(KeyType.ByteArray, deleteManifestFileKeyTemplate.format(sequenceNumber).getBytes, sequenceNumber)
+    new MapKey(domain = KeyType.ByteArray, bytes = deleteManifestFileKeyTemplate.format(sequenceNumber).getBytes, snapSequence = sequenceNumber)
   }
 }

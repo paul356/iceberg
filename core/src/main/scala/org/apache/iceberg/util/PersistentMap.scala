@@ -15,6 +15,7 @@ object KeyType extends Enumeration {
 }
 
 class MapKey(
+  val version: Int = 1,
   val domain: KeyType.Domain,
   val bytes: Array[Byte],
   val snapSequence: Long) {
@@ -58,10 +59,10 @@ object MapKey extends Comparator[MapKey] {
 }
 
 class PersistentMap private {
-  private val impl: TreeMap[MapKey, Seq[Byte]] = Maps.newTreeMap(MapKey)
+  private val impl: TreeMap[MapKey, Array[Byte]] = Maps.newTreeMap(MapKey)
 
   def getVal(key: MapKey): Array[Byte] = {
-    throw new UnsupportedOperationException(classOf[PersistentMap].getName)
+    impl.get(key)
   }
 }
 
