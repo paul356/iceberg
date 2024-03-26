@@ -2,8 +2,8 @@ package org.apache.iceberg.util
 
 import java.util.Comparator
 import java.util.TreeMap
-import scala.collection.mutable.Map
 import org.apache.iceberg.relocated.com.google.common.collect.Maps
+import scala.collection.mutable.Map
 
 object KeyType extends Enumeration {
   case class Domain(domainId: Int) extends super.Val {}
@@ -63,6 +63,10 @@ class PersistentMap private {
 
   def getVal(key: MapKey): Array[Byte] = {
     impl.get(key)
+  }
+
+  def putVal(key: MapKey, value: Array[Byte]): Unit = {
+    impl.put(key, value)
   }
 }
 

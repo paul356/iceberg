@@ -13,6 +13,7 @@ import java.math.BigDecimal
 import java.math.BigInteger
 
 import java.nio.ByteBuffer
+import java.nio.ByteOrder
 
 import org.apache.iceberg.types.Type.TypeID
 import org.apache.iceberg.types.Type.TypeID._
@@ -45,8 +46,6 @@ class QDTreeCut(
   def compare(that: QDTreeCut): Int = {
     if (columnId != that.columnId) {
       columnId - that.columnId
-    } else if (op.opId != that.op.opId) {
-      op.opId - that.op.opId
     } else {
       throw new UnsupportedOperationException(classOf[QDTreeCut].getName)
     }
@@ -89,6 +88,7 @@ object QDTreeCut {
   }
 
   def getArgument(byteBuffer: ByteBuffer, argType: TypeID): Any = {
+    byteBuffer.order(ByteOrder.LITTLE_ENDIAN)
     argType match {
       case BOOLEAN => {
         val oneByte = Array.ofDim[Byte](1)
@@ -112,7 +112,9 @@ object QDTreeCut {
         JDouble.valueOf(doubleVal)
       }
       case UUID => {
+        byteBuffer.order(ByteOrder.BIG_ENDIAN)
         UUIDUtil.convert(byteBuffer)
+        byteBuffer.order(ByteOrder.LITTLE_ENDIAN)
       }
       case STRING => {
         val len = byteBuffer.getInt()

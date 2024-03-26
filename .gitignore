@@ -11,6 +11,7 @@ site
 *.iws
 *.iml
 out
+*~
 
 # gradle build
 .gradle

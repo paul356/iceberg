@@ -2,8 +2,11 @@ package org.apache.iceberg
 
 import java.util.{List => JList}
 
-class QDTreeManifestEntryWriter[FileType <: ContentFile[FileType]](
-  val dataSequenceNumber: Long) extends ManifestEntryAppender[FileType] {
+import org.apache.iceberg.util.MapKey
+import scala.collection.mutable.HashMap
+
+class QDTreeManifestEntryWriter[FileType <: ContentFile[FileType]] private extends ManifestEntryAppender[FileType] {
+  private val writeBatch: HashMap[MapKey, Array[Byte]] = HashMap.empty[MapKey, Array[Byte]]
   def add(datum: FileType): Unit = {
     // 1. get lower & upper bounds from data file
     // 2. query the existing dataset
@@ -23,7 +26,8 @@ class QDTreeManifestEntryWriter[FileType <: ContentFile[FileType]](
 
 
 object QDTreeManifestEntryWriter {
-  def apply[FileType <: ContentFile[FileType]](sequenceNumber: Long): QDTreeManifestEntryWriter[FileType] = {
-    new QDTreeManifestEntryWriter(sequenceNumber)
+  def apply[FileType <: ContentFile[FileType]](formatVersion: Int): QDTreeManifestEntryWriter[FileType] = {
+    assert(formatVersion > 1)
+    new QDTreeManifestEntryWriter
   }
 }
