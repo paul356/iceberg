@@ -214,7 +214,7 @@ class FastAppend extends SnapshotProducer<AppendFiles> implements AppendFiles {
     if (newManifests == null && newFiles.size() > 0) {
       ManifestEntryAppender<DataFile> writer;
       if (manifestInKvdb) {
-        writer = QDTreeManifestEntryWriter.apply(ops.current().formatVersion());
+        writer = QDTreeManifestEntryWriter.newDataWriter(ops.current().formatVersion(), snapshotId());
       } else {
         writer = newRollingManifestWriter(spec);
       }

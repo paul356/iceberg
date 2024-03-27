@@ -1,5 +1,8 @@
 package org.apache.iceberg
 
+import java.util.{Collection => JCollection}
+
+import org.apache.iceberg.ManifestEntry
 import org.apache.iceberg.ManifestEntry.Status
 
 import org.apache.iceberg.types.Types.NestedField.optional
@@ -8,41 +11,36 @@ import org.apache.iceberg.types.Types.NestedField.required
 import org.apache.iceberg.types.Types
 import org.apache.iceberg.types.Types.StructType
 
-abstract class QDTreeManifestEntry[F <: ContentFile[F]](
-  val status: Status,
-  var snapshotId: Option[Long],
-  var dataSequenceNumber: Option[Long],
-  var fileSequenceNumber: Option[Long],
-  val dataSet: List[F]) {
+trait QDTreeManifestEntry[F <: ContentFile[F]] {
   def isLive: Boolean = {
     status == Status.ADDED || status == Status.EXISTING
   }
 
-  def copy: QDTreeManifestEntry[F]
+  def status: Status
+  def snapshotId: Option[Long]
+  def dataSequenceNumber: Option[Long]
+  def fileSequenceNumber: Option[Long]
+  def dataSet: JCollection[F]
 
+  def copy: QDTreeManifestEntry[F]
   def copyWithoutStats: QDTreeManifestEntry[F]
 }
 
 object QDTreeManifestEntry {
-    // ids for data-file columns are assigned from 1000
-  val STATUS: Types.NestedField = required(0, "status", Types.IntegerType.get())
-  val SNAPSHOT_ID: Types.NestedField = optional(1, "snapshot_id", Types.LongType.get())
-  val SEQUENCE_NUMBER: Types.NestedField = optional(3, "sequence_number", Types.LongType.get())
-  val FILE_SEQUENCE_NUMBER: Types.NestedField = optional(4, "file_sequence_number", Types.LongType.get());
-  val DATA_SET_ID: Int = 5;
-  val DATA_FILE_ELEMENT_ID: Int = 6;
-  // next ID to assign: 7
+  // Reuse ManifestEntry fields
+  val DATA_SET_ID: Int = ManifestEntry.DATA_FILE_ID + 1
+  val DATA_FILE_ELEMENT_ID: Int = DATA_SET_ID + 1
 
-  def getSchema(partitionType: StructType): Schema = {
-    wrapFileSchema(DataFile.getType(partitionType))
+  def getSchema: Schema = {
+    wrapFileSchema(V2Metadata.fileType(PartitionSpec.unpartitioned().partitionType()))
   }
 
-  def wrapFileSchema(fileType: StructType): Schema = {
+  private def wrapFileSchema(fileType: StructType): Schema = {
     new Schema(
-      STATUS,
-      SNAPSHOT_ID,
-      SEQUENCE_NUMBER,
-      FILE_SEQUENCE_NUMBER,
+      ManifestEntry.STATUS,
+      ManifestEntry.SNAPSHOT_ID,
+      ManifestEntry.SEQUENCE_NUMBER,
+      ManifestEntry.FILE_SEQUENCE_NUMBER,
       required(
         DATA_SET_ID,
         "data_set",
