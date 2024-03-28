@@ -22,6 +22,7 @@ import scala.jdk.CollectionConverters._
 import java.lang.Integer
 import java.lang.{Iterable => JIterable}
 import java.lang.{Long => JLong}
+import java.nio.ByteBuffer
 import java.util.{List => JList}
 import java.util.{Map => JMap}
 import org.apache.iceberg.io.ByteArrayInputFile
@@ -85,10 +86,10 @@ object QDTreeSnapshot {
   val deleteManifestFileKeyTemplate = "manifestfile-%d-delete"
 
   def dataManifestFileKey(sequenceNumber: Long): MapKey = {
-    new MapKey(domain = KeyType.ByteArray, bytes = dataManifestFileKeyTemplate.format(sequenceNumber).getBytes, snapSequence = sequenceNumber)
+    new MapKey(domain = KeyType.ByteArray, byteBuf = ByteBuffer.wrap(dataManifestFileKeyTemplate.format(sequenceNumber).getBytes), snapSequence = sequenceNumber)
   }
 
   def deleteManifestFileKey(sequenceNumber: Long): MapKey = {
-    new MapKey(domain = KeyType.ByteArray, bytes = deleteManifestFileKeyTemplate.format(sequenceNumber).getBytes, snapSequence = sequenceNumber)
+    new MapKey(domain = KeyType.ByteArray, byteBuf = ByteBuffer.wrap(deleteManifestFileKeyTemplate.format(sequenceNumber).getBytes), snapSequence = sequenceNumber)
   }
 }

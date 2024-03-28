@@ -6,10 +6,13 @@ import java.lang.{Long => JLong}
 import java.util.{List => JList}
 import java.util.{Map => JMap}
 
+import org.apache.iceberg.CutOpType
 import org.apache.iceberg.avro.Avro
 import org.apache.iceberg.io.ByteArrayOutputFile
 import org.apache.iceberg.io.FileAppender
 import org.apache.iceberg.io.OutputFile
+import org.apache.iceberg.types.Type.TypeID
+import org.apache.iceberg.util.KeyType._
 import org.apache.iceberg.util.MapKey
 
 import scala.collection.mutable.HashMap
@@ -18,16 +21,21 @@ import scala.jdk.CollectionConverters._
 class QDTreeManifestEntryWriter[FileType <: ContentFile[FileType]] private(
   val formatVersion: Int,
   val snapshotId: JLong,
-  val extraAttrs: JMap[String, String]) extends ManifestEntryAppender[FileType] {
+  val createFileWriter: (OutputFile) => ManifestWriter[FileType]) extends ManifestEntryAppender[FileType] {
   private val writeBatch: HashMap[MapKey, Array[Byte]] = HashMap.empty[MapKey, Array[Byte]]
+
+  /*private def getExistingEntries(bytes: Array[Byte]): Unit {
+    val simpleCut = new QDTreeCut(0, CutOpType.All, TypeID.BOOLEAN, null, null)
+    val byteBuffer = ByteBuffer.allocate(64)
+    QDTreeCut.toByteBuffer(byteBuffer, simpleCut)
+    val mapKey = new MapKey(domain = CutSequence, byteBuffer.getBytes(), )
+  }*/
+
   def add(datum: FileType): Unit = {
     // 1. get lower & upper bounds from data file
     // 2. query the existing dataset
     // 3. merge the data file with the existing dataset
     val outBufFile = new ByteArrayOutputFile
-    val appender = newAppender(outBufFile)
-
-    
   }
 
   def add(datum: FileType, dataSequenceNumber: Long): Unit = {
@@ -39,31 +47,14 @@ class QDTreeManifestEntryWriter[FileType <: ContentFile[FileType]] private(
 
   def close: Unit = {
   }
-
-  def newAppender(file: OutputFile): FileAppender[QDTreeManifestEntry[DataFile]] = {
-    val schema = QDTreeManifestEntry.getSchema
-    try {
-      Avro.write(file)
-        .schema(schema)
-        .named("manifest_entry")
-        .meta("format-version", "2")
-        .meta(extraAttrs)
-        .overwrite()
-        .build()
-    } catch {
-      case e: IOException => throw new UncheckedIOException("fail to create QDTree ManifestEntry writer", e)
-    }
-  }
 }
 
 
 object QDTreeManifestEntryWriter {
   def newDataWriter(version: Int, snapshotId: JLong): ManifestEntryAppender[DataFile] = {
-    val extraAttrs = Map(("content", "data"))
-    new QDTreeManifestEntryWriter(version, snapshotId, extraAttrs.asJava)
+    new QDTreeManifestEntryWriter(version, snapshotId, new ManifestWriter.V2Writer(PartitionSpec.unpartitioned(), _, snapshotId))
   }
   def newDeleteWriter(version: Int, snapshotId: JLong): ManifestEntryAppender[DeleteFile] = {
-    val extraAttrs = Map(("content", "deletes"))
-    new QDTreeManifestEntryWriter(version, snapshotId, extraAttrs.asJava)
+    new QDTreeManifestEntryWriter(version, snapshotId, new ManifestWriter.V2DeleteWriter(PartitionSpec.unpartitioned(), _, snapshotId))
   }
 }

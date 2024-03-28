@@ -38,10 +38,10 @@ object CutOpType extends Enumeration {
 
 class QDTreeCut(
   val columnId: Int,
-  val op: CutOpType.OpType,
+  val opType: CutOpType.OpType,
   val argType: TypeID,
-  val arg1: Any,
-  val arg2: Any) extends Ordered[QDTreeCut] {
+  val arg1: AnyRef,
+  val arg2: AnyRef) extends Ordered[QDTreeCut] {
 
   def compare(that: QDTreeCut): Int = {
     if (columnId != that.columnId) {
@@ -52,15 +52,13 @@ class QDTreeCut(
   }
 }
 
-class QDTreeCutIterator(byteArr: Array[Byte]) extends Iterator[QDTreeCut] {
-  lazy val stream = ByteBuffer.wrap(byteArr)
-
+class QDTreeCutIterator(byteArr: ByteBuffer) extends Iterator[QDTreeCut] {
   override def hasNext: Boolean = {
-    stream.remaining() > 0
+    byteArr.remaining() > 0
   }
 
   override def next(): QDTreeCut = {
-    QDTreeCut.fromByteBuffer(stream)
+    QDTreeCut.fromByteBuffer(byteArr)
   }
 }
 
@@ -70,8 +68,8 @@ object QDTreeCut {
   private def compareCuts(obj1: MapKey, obj2: MapKey): Int = {
     require(obj1.domain == KeyType.CutSequence && obj2.domain == KeyType.CutSequence)
     val min = new QDTreeCut(-1, CutOpType.All, BOOLEAN, null, null)
-    val cuts1 = new QDTreeCutIterator(obj1.bytes)
-    val cuts2 = new QDTreeCutIterator(obj2.bytes)
+    val cuts1 = new QDTreeCutIterator(obj1.getBytes)
+    val cuts2 = new QDTreeCutIterator(obj2.getBytes)
     val zip = cuts1.zipAll(cuts2, min, min)
     val inequalPair = zip.find({case (cut1, cut2) => cut1 != cut2})
     val cmpReslt = inequalPair.map({
@@ -87,7 +85,7 @@ object QDTreeCut {
     }).get
   }
 
-  def getArgument(byteBuffer: ByteBuffer, argType: TypeID): Any = {
+  def getArgument(byteBuffer: ByteBuffer, argType: TypeID): AnyRef = {
     byteBuffer.order(ByteOrder.LITTLE_ENDIAN)
     argType match {
       case BOOLEAN => {
@@ -139,12 +137,16 @@ object QDTreeCut {
     }
   }
 
+  def putArgument(byteBuffer: ByteBuffer, typeId: TypeID, arg: AnyRef): Unit = {
+    throw new UnsupportedOperationException("please implement this function")
+  }
+
   def fromByteBuffer(byteBuffer: ByteBuffer): QDTreeCut = {
     val columnId = byteBuffer.getInt()
     val opTypeId = byteBuffer.getInt()
     val opType = CutOpType.OpType(opTypeId)
-    var arg1: Any = null
-    var arg2: Any = null
+    var arg1: AnyRef = null
+    var arg2: AnyRef = null
 
     if (opType == CutOpType.All) {
       return new QDTreeCut(columnId, opType, TypeID.BOOLEAN, null, null)
@@ -168,6 +170,28 @@ object QDTreeCut {
     }
 
     new QDTreeCut(columnId, opType, argTypeId, arg1, arg2)
+  }
+
+  def toByteBuffer(byteBuffer: ByteBuffer, cut: QDTreeCut): Unit = {
+    byteBuffer.putInt(cut.columnId).putInt(cut.opType.opId)
+    if (cut.opType == CutOpType.All) {
+      return
+    }
+
+    val bytes = cut.argType.name().getBytes("ISO-8859-1")
+    byteBuffer.putInt(bytes.length)
+    byteBuffer.put(bytes)
+
+    cut.opType match {
+      case CutOpType.LessThan | CutOpType.LargerEqual | CutOpType.Equal | CutOpType.NotEqual => {
+        putArgument(byteBuffer, cut.argType, cut.arg1)
+      }
+      case CutOpType.LargerEqualPlusLessThan => {
+        putArgument(byteBuffer, cut.argType, cut.arg1)
+        putArgument(byteBuffer, cut.argType, cut.arg2)
+      }
+      case _ => throw new UnsupportedOperationException("Unkown QDTreeCut operation type")
+    }
   }
 
   MapKey.registerComparator(KeyType.CutSequence, compareCuts)

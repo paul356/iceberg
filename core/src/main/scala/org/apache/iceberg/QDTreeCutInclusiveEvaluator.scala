@@ -103,28 +103,28 @@ class QDTreeCutInclusiveEvaluator(
     if (fieldType.isInstanceOf[Type.PrimitiveType]) {
       val primitiveType = fieldType.asInstanceOf[Type.PrimitiveType]
       typeId match {
-        case BOOLEAN => checkAgainstCutInner(cut.columnId, cut.op, Comparators.forType(primitiveType), cut.arg1.asInstanceOf[JBoolean], cut.arg2.asInstanceOf[JBoolean])
-        case INTEGER => checkAgainstCutInner(cut.columnId, cut.op, Comparators.forType(primitiveType), cut.arg1.asInstanceOf[JInteger], cut.arg2.asInstanceOf[JInteger])
-        case LONG => checkAgainstCutInner(cut.columnId, cut.op, Comparators.forType(primitiveType), cut.arg1.asInstanceOf[JLong], cut.arg2.asInstanceOf[JLong])
-        case FLOAT => checkAgainstCutInner(cut.columnId, cut.op, Comparators.forType(primitiveType), cut.arg1.asInstanceOf[JFloat], cut.arg2.asInstanceOf[JFloat])
-        case DOUBLE => checkAgainstCutInner(cut.columnId, cut.op, Comparators.forType(primitiveType), cut.arg1.asInstanceOf[JDouble], cut.arg2.asInstanceOf[JDouble])
-        case STRING => checkAgainstCutInner(cut.columnId, cut.op, Comparators.forType(primitiveType), cut.arg1.asInstanceOf[CharSequence], cut.arg2.asInstanceOf[CharSequence])
-        case UUID => checkAgainstCutInner(cut.columnId, cut.op, Comparators.forType(primitiveType), cut.arg1.asInstanceOf[java.util.UUID], cut.arg2.asInstanceOf[java.util.UUID])
-        case FIXED => checkAgainstCutInner(cut.columnId, cut.op, Comparators.forType(primitiveType), cut.arg1.asInstanceOf[ByteBuffer], cut.arg2.asInstanceOf[ByteBuffer])
-        case BINARY => checkAgainstCutInner(cut.columnId, cut.op, Comparators.forType(primitiveType), cut.arg1.asInstanceOf[ByteBuffer], cut.arg2.asInstanceOf[ByteBuffer])
+        case BOOLEAN => checkAgainstCutInner(cut.columnId, cut.opType, Comparators.forType(primitiveType), cut.arg1.asInstanceOf[JBoolean], cut.arg2.asInstanceOf[JBoolean])
+        case INTEGER => checkAgainstCutInner(cut.columnId, cut.opType, Comparators.forType(primitiveType), cut.arg1.asInstanceOf[JInteger], cut.arg2.asInstanceOf[JInteger])
+        case LONG => checkAgainstCutInner(cut.columnId, cut.opType, Comparators.forType(primitiveType), cut.arg1.asInstanceOf[JLong], cut.arg2.asInstanceOf[JLong])
+        case FLOAT => checkAgainstCutInner(cut.columnId, cut.opType, Comparators.forType(primitiveType), cut.arg1.asInstanceOf[JFloat], cut.arg2.asInstanceOf[JFloat])
+        case DOUBLE => checkAgainstCutInner(cut.columnId, cut.opType, Comparators.forType(primitiveType), cut.arg1.asInstanceOf[JDouble], cut.arg2.asInstanceOf[JDouble])
+        case STRING => checkAgainstCutInner(cut.columnId, cut.opType, Comparators.forType(primitiveType), cut.arg1.asInstanceOf[CharSequence], cut.arg2.asInstanceOf[CharSequence])
+        case UUID => checkAgainstCutInner(cut.columnId, cut.opType, Comparators.forType(primitiveType), cut.arg1.asInstanceOf[java.util.UUID], cut.arg2.asInstanceOf[java.util.UUID])
+        case FIXED => checkAgainstCutInner(cut.columnId, cut.opType, Comparators.forType(primitiveType), cut.arg1.asInstanceOf[ByteBuffer], cut.arg2.asInstanceOf[ByteBuffer])
+        case BINARY => checkAgainstCutInner(cut.columnId, cut.opType, Comparators.forType(primitiveType), cut.arg1.asInstanceOf[ByteBuffer], cut.arg2.asInstanceOf[ByteBuffer])
         case DECIMAL => {
           val lowerBound = lowerBounds.get(cut.columnId).asInstanceOf[BigDecimal]
           if (cut.arg1 != null && cut.arg2 != null) {
-            checkAgainstCutInner(cut.columnId, cut.op, Comparators.forType(primitiveType), cut.arg1.asInstanceOf[BigDecimal].setScale(lowerBound.scale()), cut.arg2.asInstanceOf[BigDecimal].setScale(lowerBound.scale))
+            checkAgainstCutInner(cut.columnId, cut.opType, Comparators.forType(primitiveType), cut.arg1.asInstanceOf[BigDecimal].setScale(lowerBound.scale()), cut.arg2.asInstanceOf[BigDecimal].setScale(lowerBound.scale))
           } else if (cut.arg1 != null) {
-            checkAgainstCutInner(cut.columnId, cut.op, Comparators.forType(primitiveType), cut.arg1.asInstanceOf[BigDecimal].setScale(lowerBound.scale()), cut.arg2.asInstanceOf[BigDecimal])
+            checkAgainstCutInner(cut.columnId, cut.opType, Comparators.forType(primitiveType), cut.arg1.asInstanceOf[BigDecimal].setScale(lowerBound.scale()), cut.arg2.asInstanceOf[BigDecimal])
           } else {
-            checkAgainstCutInner(cut.columnId, cut.op, Comparators.forType(primitiveType), cut.arg1.asInstanceOf[BigDecimal], cut.arg2.asInstanceOf[BigDecimal])
+            checkAgainstCutInner(cut.columnId, cut.opType, Comparators.forType(primitiveType), cut.arg1.asInstanceOf[BigDecimal], cut.arg2.asInstanceOf[BigDecimal])
           }
         }
-        case DATE => checkAgainstCutInner(cut.columnId, cut.op, Comparators.forType(primitiveType), cut.arg1.asInstanceOf[JInteger], cut.arg2.asInstanceOf[JInteger])
-        case TIME => checkAgainstCutInner(cut.columnId, cut.op, Comparators.forType(primitiveType), cut.arg1.asInstanceOf[JLong], cut.arg2.asInstanceOf[JLong])
-        case TIMESTAMP => checkAgainstCutInner(cut.columnId, cut.op, Comparators.forType(primitiveType), cut.arg1.asInstanceOf[JLong], cut.arg2.asInstanceOf[JLong])
+        case DATE => checkAgainstCutInner(cut.columnId, cut.opType, Comparators.forType(primitiveType), cut.arg1.asInstanceOf[JInteger], cut.arg2.asInstanceOf[JInteger])
+        case TIME => checkAgainstCutInner(cut.columnId, cut.opType, Comparators.forType(primitiveType), cut.arg1.asInstanceOf[JLong], cut.arg2.asInstanceOf[JLong])
+        case TIMESTAMP => checkAgainstCutInner(cut.columnId, cut.opType, Comparators.forType(primitiveType), cut.arg1.asInstanceOf[JLong], cut.arg2.asInstanceOf[JLong])
         case _ => throw new UnsupportedOperationException(this.getClass().getName())
       }
     } else {
