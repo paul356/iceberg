@@ -55,13 +55,13 @@ object MapKey extends Comparator[MapKey] {
 }
 
 class PersistentMap private {
-  private val impl: TreeMap[MapKey, Array[Byte]] = Maps.newTreeMap(MapKey)
+  private val impl: TreeMap[MapKey, ByteBuffer] = Maps.newTreeMap(MapKey)
 
-  def getVal(key: MapKey): Array[Byte] = {
+  def getVal(key: MapKey): ByteBuffer = {
     impl.get(key)
   }
 
-  def putVal(key: MapKey, value: Array[Byte]): Unit = {
+  def putVal(key: MapKey, value: ByteBuffer): Unit = {
     impl.put(key, value)
   }
 }

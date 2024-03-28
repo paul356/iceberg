@@ -1,52 +1,54 @@
 package org.apache.iceberg.io
 
-import java.io.ByteArrayInputStream
 import java.io.IOException
+import java.nio.ByteBuffer
+import java.util.{List => JList}
 
-class ByteArrayInputFile(byteArr: Array[Byte]) extends InputFile {
-  class ByteArraySeekableInputStream(
-    byteArr: Array[Byte]
-  ) extends SeekableInputStream {
+import org.apache.avro.util.ByteBufferInputStream
+import scala.jdk.CollectionConverters._
+
+class ByteBufferInputFile(byteBufs: JList[ByteBuffer]) extends InputFile {
+  class ByteBufferSeekableInputStream extends SeekableInputStream {
     private var offset: Long = 0
-    private val byteArrayStream = new ByteArrayInputStream(byteArr)
+    private val byteBufferStream = new ByteBufferInputStream(byteBufs)
 
     override def getPos: Long = offset
 
     override def seek(newPos: Long) = {
-      byteArrayStream.reset()
-      byteArrayStream.skip(newPos)
+      byteBufferStream.reset()
+      byteBufferStream.skip(newPos)
       offset = newPos
     }
 
     override def read: Int = {
-      byteArrayStream.read
+      byteBufferStream.read
     }
 
     override def read(b: Array[Byte]): Int = {
-      byteArrayStream.read(b)
+      byteBufferStream.read(b)
     }
 
     override def read(b: Array[Byte], off: Int, len: Int): Int = {
-      byteArrayStream.read(b, off, len)
+      byteBufferStream.read(b, off, len)
     }
 
-    override def skip(n: Long): Long = byteArrayStream.skip(n)
+    override def skip(n: Long): Long = byteBufferStream.skip(n)
 
-    override def available: Int = byteArrayStream.available()
+    override def available: Int = byteBufferStream.available()
 
-    override def close = byteArrayStream.close()
+    override def close = byteBufferStream.close()
 
-    override def mark(readLimit: Int) = byteArrayStream.mark(readLimit)
+    override def mark(readLimit: Int) = byteBufferStream.mark(readLimit)
 
-    override def reset = byteArrayStream.reset
+    override def reset = byteBufferStream.reset
 
-    override def markSupported: Boolean = byteArrayStream.markSupported
+    override def markSupported: Boolean = byteBufferStream.markSupported
   }
 
-  override def getLength: Long = byteArr.length
+  override val getLength: Long = byteBufs.asScala.foldLeft(0)((a, b) => a + b.remaining())
 
   override def newStream: SeekableInputStream = {
-    new ByteArraySeekableInputStream(byteArr)
+    new ByteBufferSeekableInputStream
   }
 
   override def location: String = {

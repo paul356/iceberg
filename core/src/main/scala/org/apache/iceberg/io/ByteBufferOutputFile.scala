@@ -1,62 +1,65 @@
 package org.apache.iceberg.io
 
-import java.io.ByteArrayOutputStream
 import java.io.IOException
+import java.nio.ByteBuffer
+import java.util.{List => JList}
 
+import org.apache.avro.util.ByteBufferOutputStream
 import org.apache.iceberg.exceptions.AlreadyExistsException
 
-class ByteArrayOutputFile extends OutputFile {
-  class ByteArrayPositionOutputStream extends PositionOutputStream {
+class ByteBufferOutputFile extends OutputFile {
+  class ByteBufferPositionOutputStream extends PositionOutputStream {
     private var offset: Long = 0
-    private val byteArrayStream = new ByteArrayOutputStream
+    private val byteBufferStream = new ByteBufferOutputStream
 
     override def getPos: Long = offset
 
-    override def close = byteArrayStream.close()
+    override def close = byteBufferStream.close()
 
-    override def flush = byteArrayStream.flush()
+    override def flush = byteBufferStream.flush()
 
     override def write(b: Array[Byte]) = {
-      byteArrayStream.write(b)
+      byteBufferStream.write(b)
       offset += b.length
     }
 
     override def write(b: Array[Byte], off: Int, len: Int) = {
-      byteArrayStream.write(b, off, len)
+      byteBufferStream.write(b, off, len)
       offset += len
     }
 
     override def write(b: Int) = {
-      byteArrayStream.write(b)
+      byteBufferStream.write(b)
       offset += 1
     }
 
-    def toByteArray: Array[Byte] = byteArrayStream.toByteArray
+    def toByteBuffer: JList[ByteBuffer] = byteBufferStream.getBufferList()
   }
 
-  private var positionStream: ByteArrayPositionOutputStream = null
+  private var positionStream: ByteBufferPositionOutputStream = null
 
   @throws(classOf[AlreadyExistsException])
   override def create: PositionOutputStream = {
     if (positionStream != null) {
       throw new AlreadyExistsException("An output stream already exists")
     }
-    positionStream = new ByteArrayPositionOutputStream
+    positionStream = new ByteBufferPositionOutputStream
     positionStream
   }
 
   override def createOrOverwrite: PositionOutputStream = {
-    create
+    positionStream = new ByteBufferPositionOutputStream
+    positionStream
   }
 
   override def location: String = {
-    "@ByteArrayOutputStream"
+    "@ByteBufferOutputStream"
   }
 
   override def toInputFile: InputFile = {
-    val arr = positionStream.toByteArray
-    new ByteArrayInputFile(arr)
+    val arr = positionStream.toByteBuffer
+    new ByteBufferInputFile(arr)
   }
 
-  def toByteArray: Array[Byte] = positionStream.toByteArray
+  def toByteBuffer: JList[ByteBuffer] = positionStream.toByteBuffer
 }

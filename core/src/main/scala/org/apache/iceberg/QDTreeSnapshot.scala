@@ -25,11 +25,13 @@ import java.lang.{Long => JLong}
 import java.nio.ByteBuffer
 import java.util.{List => JList}
 import java.util.{Map => JMap}
-import org.apache.iceberg.io.ByteArrayInputFile
+import org.apache.iceberg.io.ByteBufferInputFile
 import org.apache.iceberg.io.FileIO
 import org.apache.iceberg.util.KeyType
 import org.apache.iceberg.util.MapKey
 import org.apache.iceberg.util.PersistentMap
+
+import scala.jdk.CollectionConverters._
 
 class QDTreeSnapshot(
   val sequenceNumber: Long,
@@ -72,12 +74,12 @@ class QDTreeSnapshot(
 
   private lazy val dataManifestFile = {
     val valBytes = metaStore.getVal(QDTreeSnapshot.dataManifestFileKey(sequenceNumber))
-    ManifestLists.read(new ByteArrayInputFile(valBytes))
+    ManifestLists.read(new ByteBufferInputFile(List(valBytes).asJava))
   }
 
   private lazy val deleteManifestFile = {
     val valBytes = metaStore.getVal(QDTreeSnapshot.deleteManifestFileKey(sequenceNumber))
-    ManifestLists.read(new ByteArrayInputFile(valBytes))
+    ManifestLists.read(new ByteBufferInputFile(List(valBytes).asJava))
   }
 }
 

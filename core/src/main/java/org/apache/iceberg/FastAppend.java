@@ -35,6 +35,7 @@ import org.apache.iceberg.io.OutputFile;
 import org.apache.iceberg.relocated.com.google.common.base.Preconditions;
 import org.apache.iceberg.relocated.com.google.common.collect.Iterables;
 import org.apache.iceberg.relocated.com.google.common.collect.Lists;
+import org.apache.iceberg.util.PersistentMap$;
 
 /**
  * {@link AppendFiles Append} implementation that adds a new manifest file for the write.
@@ -214,7 +215,7 @@ class FastAppend extends SnapshotProducer<AppendFiles> implements AppendFiles {
     if (newManifests == null && newFiles.size() > 0) {
       ManifestEntryAppender<DataFile> writer;
       if (manifestInKvdb) {
-        writer = QDTreeManifestEntryWriter.newDataWriter(ops.current().formatVersion(), snapshotId());
+        writer = QDTreeManifestEntryWriter.newDataWriter(PersistentMap$.MODULE$.instance(), ops.current().formatVersion(), snapshotId());
       } else {
         writer = newRollingManifestWriter(spec);
       }
