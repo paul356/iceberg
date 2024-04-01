@@ -53,6 +53,7 @@ class FastAppend extends SnapshotProducer<AppendFiles> implements AppendFiles {
   private final List<ManifestFile> appendManifests = Lists.newArrayList();
   private final List<ManifestFile> rewrittenAppendManifests = Lists.newArrayList();
   private List<ManifestFile> newManifests = null;
+  private ManifestEntryAppender<DataFile> writer = null;
   private boolean hasNewFiles = false;
   private boolean manifestInKvdb = false;
 
@@ -148,7 +149,7 @@ class FastAppend extends SnapshotProducer<AppendFiles> implements AppendFiles {
   }
 
   @Override
-  public List<ManifestFile> apply(TableMetadata base, Snapshot snapshot) {
+  public List<ManifestFile> apply(TableMetadata base, long sequenceNumber, Snapshot snapshot) {
     List<ManifestFile> manifests = Lists.newArrayList();
 
     try {

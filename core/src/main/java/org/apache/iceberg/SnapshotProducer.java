@@ -212,7 +212,7 @@ abstract class SnapshotProducer<ThisT> implements SnapshotUpdate<ThisT> {
    * @param snapshot snapshot to apply the changes to
    * @return a manifest list for the new snapshot.
    */
-  protected abstract List<ManifestFile> apply(TableMetadata metadataToUpdate, Snapshot snapshot);
+  protected abstract List<ManifestFile> apply(TableMetadata metadataToUpdate, long sequenceNumber, Snapshot snapshot);
 
   @Override
   public Snapshot apply() {
@@ -223,7 +223,7 @@ abstract class SnapshotProducer<ThisT> implements SnapshotUpdate<ThisT> {
     Long parentSnapshotId = parentSnapshot == null ? null : parentSnapshot.snapshotId();
 
     validate(base, parentSnapshot);
-    List<ManifestFile> manifests = apply(base, parentSnapshot);
+    List<ManifestFile> manifests = apply(base, sequenceNumber, parentSnapshot);
 
     OutputFile manifestList = manifestListPath();
 

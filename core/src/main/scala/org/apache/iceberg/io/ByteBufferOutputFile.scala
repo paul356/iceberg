@@ -7,6 +7,8 @@ import java.util.{List => JList}
 import org.apache.avro.util.ByteBufferOutputStream
 import org.apache.iceberg.exceptions.AlreadyExistsException
 
+import scala.jdk.CollectionConverters._
+
 class ByteBufferOutputFile extends OutputFile {
   class ByteBufferPositionOutputStream extends PositionOutputStream {
     private var offset: Long = 0
@@ -31,6 +33,16 @@ class ByteBufferOutputFile extends OutputFile {
     override def write(b: Int) = {
       byteBufferStream.write(b)
       offset += 1
+    }
+
+    def writeBuffer(byteBuf: ByteBuffer): Unit = {
+      byteBufferStream.writeBuffer(byteBuf)
+      offset += byteBuf.remaining()
+    }
+
+    def append(byteBufs: List[ByteBuffer]): Unit = {
+      byteBufferStream.append(byteBufs.asJava)
+      offset += byteBufs.foldLeft(0)((a, b) => a + b.remaining())
     }
 
     def toByteBuffer: JList[ByteBuffer] = byteBufferStream.getBufferList()
@@ -60,6 +72,10 @@ class ByteBufferOutputFile extends OutputFile {
     val arr = positionStream.toByteBuffer
     new ByteBufferInputFile(arr)
   }
+
+  def writeBuffer(byteBuf: ByteBuffer): Unit = positionStream.writeBuffer(byteBuf)
+
+  def append(byteBufs: List[ByteBuffer]): Unit = positionStream.append(byteBufs)
 
   def toByteBuffer: JList[ByteBuffer] = positionStream.toByteBuffer
 }

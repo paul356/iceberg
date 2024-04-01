@@ -817,7 +817,7 @@ abstract class MergingSnapshotProducer<ThisT> extends SnapshotProducer<ThisT> {
   }
 
   @Override
-  public List<ManifestFile> apply(TableMetadata base, Snapshot snapshot) {
+  public List<ManifestFile> apply(TableMetadata base, long sequenceNumber, Snapshot snapshot) {
     // filter any existing manifests
     List<ManifestFile> filtered =
         filterManager.filterManifests(

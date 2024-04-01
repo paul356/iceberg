@@ -3,8 +3,8 @@ package org.apache.iceberg
 import java.nio.ByteBuffer
 import java.lang.{Long => JLong}
 
-import org.apache.iceberg.io.ByteArrayOutputFile
-import org.apache.iceberg.io.ByteArrayInputFile
+import org.apache.iceberg.io.ByteBufferOutputFile
+import org.apache.iceberg.io.ByteBufferInputFile
 
 import org.junit.Assert._
 import org.junit.Test
@@ -19,7 +19,7 @@ class TestWriteManifestFileToByteArray {
       ManifestContent.DATA,
       1L,
       1L,
-      new JLong(0),
+      JLong.valueOf(0),
       1,
       100L,
       0,
@@ -28,18 +28,18 @@ class TestWriteManifestFileToByteArray {
       0L,
       null,
       null)
-    val outputFile = new ByteArrayOutputFile
+    val outputFile = new ByteBufferOutputFile
 
     val writer = ManifestLists.write(2, outputFile, 1, 0, 1)
 
     writer.add(testManifestFile)
     writer.close()
 
-    val byteArr = outputFile.toByteArray
-    print(s"manifest output file length ${byteArr.length}")
-    assertTrue(byteArr.length > 0)
+    val byteArr = outputFile.toByteBuffer
+    print(s"manifest output file length ${byteArr.get(0).remaining()}")
+    assertTrue(byteArr.get(0).remaining() > 0)
 
-    val inputFile = new ByteArrayInputFile(byteArr)
+    val inputFile = new ByteBufferInputFile(byteArr)
     val manifestFile = ManifestLists.read(inputFile).get(0)
 
     assertTrue(manifestFile.path() == "@ByteArray")

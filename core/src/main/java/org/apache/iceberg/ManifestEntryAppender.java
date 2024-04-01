@@ -9,4 +9,7 @@ public interface ManifestEntryAppender<D> extends Closeable {
   void add(D addFile, long dataSequenceNumber);
 
   List<ManifestFile> toManifestFiles();
+
+  default void commit(long sequenceNumber) {
+  }
 }

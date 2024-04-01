@@ -30,10 +30,10 @@ class MapKey(
 }
 
 object MapKey extends Comparator[MapKey] {
-  private val comparators: Map[KeyType.Domain, (MapKey, MapKey) => Int] = Map((KeyType.ByteArray, compareByteArray))
-  private def compareByteArray(obj1: MapKey, obj2: MapKey): Int = {
+  private val comparators: Map[KeyType.Domain, (MapKey, MapKey, Boolean) => Int] = Map((KeyType.ByteArray, compareByteArray))
+  private def compareByteArray(obj1: MapKey, obj2: MapKey, withSequence: Boolean): Int = {
     val cmp = obj1.bytes.compareTo(obj2.bytes)
-    if (cmp == 0) {
+    if (cmp == 0 && withSequence) {
       obj1.snapSequence.compare(obj2.snapSequence)
     } else {
       cmp
@@ -45,11 +45,20 @@ object MapKey extends Comparator[MapKey] {
       obj1.domain.domainId - obj2.domain.domainId
     } else {
       val comparator = comparators(obj1.domain)
-      comparator(obj1, obj2)
+      comparator(obj1, obj2, true)
     }
   }
 
-  def registerComparator(domain: KeyType.Domain, comparator: (MapKey, MapKey) => Int) = {
+  def equalWithoutSequence(obj1: MapKey, obj2: MapKey): Boolean = {
+    if (obj1.domain != obj2.domain) {
+      false
+    } else {
+      val comparator = comparators(obj1.domain)
+      comparator(obj1, obj2, false) == 0
+    }
+  }
+
+  def registerComparator(domain: KeyType.Domain, comparator: (MapKey, MapKey, Boolean) => Int) = {
     comparators(domain) = comparator
   }
 }
@@ -59,6 +68,19 @@ class PersistentMap private {
 
   def getVal(key: MapKey): ByteBuffer = {
     impl.get(key)
+  }
+
+  def getValWithSmallerSequence(key: MapKey): (MapKey, ByteBuffer) = {
+    val entry = impl.floorEntry(key)
+    if (entry != null) {
+      if (MapKey.equalWithoutSequence(entry.getKey(), key)) {
+        (entry.getKey(), entry.getValue())
+      } else {
+        null
+      }
+    } else {
+      null
+    }
   }
 
   def putVal(key: MapKey, value: ByteBuffer): Unit = {

@@ -26,7 +26,7 @@ import org.apache.iceberg.util.UUIDUtil
 object CutOpType extends Enumeration {
   case class OpType(opId: Int) extends super.Val {}
   import scala.language.implicitConversions
-  implicit def valueToOpTypeVal(x: Value): OpType = x.asInstanceOf[OpType]
+  implicit def valueToOpTypeVal(x: CutOpType.Value): CutOpType.OpType = x.asInstanceOf[CutOpType.OpType]
 
   val All = OpType(0)
   val LessThan = OpType(1)
@@ -44,8 +44,14 @@ class QDTreeCut(
   val arg2: AnyRef) extends Ordered[QDTreeCut] {
 
   def compare(that: QDTreeCut): Int = {
+    if (this eq that) {
+      return 0
+    }
+
     if (columnId != that.columnId) {
       columnId - that.columnId
+    } else if (opType == that.opType && opType == CutOpType.All) {
+      0
     } else {
       throw new UnsupportedOperationException(classOf[QDTreeCut].getName)
     }
@@ -65,7 +71,11 @@ class QDTreeCutIterator(byteArr: ByteBuffer) extends Iterator[QDTreeCut] {
 object QDTreeCut {
   private val DefaultDecimalScale = 0
 
-  private def compareCuts(obj1: MapKey, obj2: MapKey): Int = {
+  private def compareCuts(obj1: MapKey, obj2: MapKey, withSequence: Boolean): Int = {
+    if (obj1 eq obj2) {
+      return 0
+    }
+
     require(obj1.domain == KeyType.CutSequence && obj2.domain == KeyType.CutSequence)
     val min = new QDTreeCut(-1, CutOpType.All, BOOLEAN, null, null)
     val cuts1 = new QDTreeCutIterator(obj1.getBytes)
@@ -81,7 +91,11 @@ object QDTreeCut {
         }
     })
     cmpReslt.orElse({
-      Some(obj1.snapSequence.compare(obj2.snapSequence))
+      if (withSequence) {
+        Some(obj1.snapSequence.compare(obj2.snapSequence))
+      } else {
+        Some(0)
+      }
     }).get
   }
 
@@ -142,9 +156,11 @@ object QDTreeCut {
   }
 
   def fromByteBuffer(byteBuffer: ByteBuffer): QDTreeCut = {
+    val magic = byteBuffer.getInt()
+    assert(magic == 0xface)
     val columnId = byteBuffer.getInt()
     val opTypeId = byteBuffer.getInt()
-    val opType = CutOpType.OpType(opTypeId)
+    val opType = CutOpType.values.find((enumType: CutOpType.Value) => enumType.opId == opTypeId).get
     var arg1: AnyRef = null
     var arg2: AnyRef = null
 
@@ -173,7 +189,7 @@ object QDTreeCut {
   }
 
   def toByteBuffer(byteBuffer: ByteBuffer, cut: QDTreeCut): Unit = {
-    byteBuffer.putInt(cut.columnId).putInt(cut.opType.opId)
+    byteBuffer.putInt(0xface).putInt(cut.columnId).putInt(cut.opType.opId)
     if (cut.opType == CutOpType.All) {
       return
     }

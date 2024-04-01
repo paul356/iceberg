@@ -49,11 +49,13 @@ class QDTreeSnapshot(
   }
 
   override def dataManifests(io: FileIO): JList[ManifestFile] = {
-    dataManifestFile
+    val valBytes = metaStore.getVal(QDTreeSnapshot.dataManifestFileKey(sequenceNumber))
+    ManifestLists.read(new ByteBufferInputFile(List(valBytes).asJava))
   }
 
   override def deleteManifests(io: FileIO): JList[ManifestFile] = {
-    deleteManifestFile
+    val valBytes = metaStore.getVal(QDTreeSnapshot.deleteManifestFileKey(sequenceNumber))
+    ManifestLists.read(new ByteBufferInputFile(List(valBytes).asJava))
   }
 
   override def addedDataFiles(io: FileIO): JIterable[DataFile] = {
@@ -70,16 +72,6 @@ class QDTreeSnapshot(
 
   override def removedDeleteFiles(io: FileIO): JIterable[DeleteFile] = {
     List.empty[DeleteFile].asJava
-  }
-
-  private lazy val dataManifestFile = {
-    val valBytes = metaStore.getVal(QDTreeSnapshot.dataManifestFileKey(sequenceNumber))
-    ManifestLists.read(new ByteBufferInputFile(List(valBytes).asJava))
-  }
-
-  private lazy val deleteManifestFile = {
-    val valBytes = metaStore.getVal(QDTreeSnapshot.deleteManifestFileKey(sequenceNumber))
-    ManifestLists.read(new ByteBufferInputFile(List(valBytes).asJava))
   }
 }
 

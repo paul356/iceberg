@@ -110,14 +110,14 @@ public class BaseReplacePartitions extends MergingSnapshotProducer<ReplacePartit
   }
 
   @Override
-  public List<ManifestFile> apply(TableMetadata base, Snapshot snapshot) {
+  public List<ManifestFile> apply(TableMetadata base, long sequenceNumber, Snapshot snapshot) {
     if (dataSpec().fields().size() <= 0) {
       // replace all data in an unpartitioned table
       deleteByRowFilter(Expressions.alwaysTrue());
     }
 
     try {
-      return super.apply(base, snapshot);
+      return super.apply(base, sequenceNumber, snapshot);
     } catch (ManifestFilterManager.DeleteException e) {
       throw new ValidationException(
           "Cannot commit file that conflicts with existing partition: %s", e.partition());
