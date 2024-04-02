@@ -50,7 +50,7 @@ class TestQDTreeManifestEntryWriter {
 
     clearOldKey
 
-    val writer = QDTreeManifestEntryWriter.newDataWriter(metaStore, 1, snapshot)
+    val writer = QDTreeManifestEntryWriter.newDataWriter(metaStore, 2, snapshot)
     val dataFile = new GenericDataFile(
       0,
       "file://first-file",
@@ -101,7 +101,7 @@ class TestQDTreeManifestEntryWriter {
     writer1.commit(1)
 
     val snapshot2 = JLong.valueOf(2)
-    val writer2 = QDTreeManifestEntryWriter.newDataWriter(metaStore, 0x1, snapshot2)
+    val writer2 = QDTreeManifestEntryWriter.newDataWriter(metaStore, 2, snapshot2)
     val dataFile3 = new GenericDataFile(
       0,
       "file://third-file",

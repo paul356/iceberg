@@ -53,7 +53,6 @@ class FastAppend extends SnapshotProducer<AppendFiles> implements AppendFiles {
   private final List<ManifestFile> appendManifests = Lists.newArrayList();
   private final List<ManifestFile> rewrittenAppendManifests = Lists.newArrayList();
   private List<ManifestFile> newManifests = null;
-  private ManifestEntryAppender<DataFile> writer = null;
   private boolean hasNewFiles = false;
   private boolean manifestInKvdb = false;
 
@@ -153,7 +152,7 @@ class FastAppend extends SnapshotProducer<AppendFiles> implements AppendFiles {
     List<ManifestFile> manifests = Lists.newArrayList();
 
     try {
-      List<ManifestFile> newWrittenManifests = writeNewManifests(base);
+      List<ManifestFile> newWrittenManifests = writeNewManifests(base, sequenceNumber);
       if (newWrittenManifests != null) {
         manifests.addAll(newWrittenManifests);
       }
@@ -207,7 +206,7 @@ class FastAppend extends SnapshotProducer<AppendFiles> implements AppendFiles {
     }
   }
 
-  private List<ManifestFile> writeNewManifests(TableMetadata base) throws IOException {
+  private List<ManifestFile> writeNewManifests(TableMetadata base, long sequenceNumber) throws IOException {
     if (hasNewFiles && newManifests != null) {
       newManifests.forEach(file -> deleteFile(file.path()));
       newManifests = null;
@@ -215,7 +214,7 @@ class FastAppend extends SnapshotProducer<AppendFiles> implements AppendFiles {
 
     if (newManifests == null && newFiles.size() > 0) {
       ManifestEntryAppender<DataFile> writer;
-      if (manifestInKvdb) {
+      if (manifestInKvdb && ops.current().formatVersion() > 1) {
         writer = QDTreeManifestEntryWriter.newDataWriter(PersistentMap$.MODULE$.instance(), ops.current().formatVersion(), snapshotId());
       } else {
         writer = newRollingManifestWriter(spec);
@@ -228,6 +227,8 @@ class FastAppend extends SnapshotProducer<AppendFiles> implements AppendFiles {
 
       this.newManifests = writer.toManifestFiles();
       hasNewFiles = false;
+
+      writer.commit(sequenceNumber);
     }
 
     return newManifests;
