@@ -2,6 +2,7 @@ package org.apache.iceberg.util
 
 import java.nio.ByteBuffer
 import java.util.Comparator
+import java.util.{Map => JMap}
 import java.util.TreeMap
 import org.apache.iceberg.relocated.com.google.common.collect.Maps
 import scala.collection.mutable.Map
@@ -70,7 +71,7 @@ class PersistentMap private {
     impl.get(key)
   }
 
-  def getValWithSmallerSequence(key: MapKey): (MapKey, ByteBuffer) = {
+  def getValWithSequenceFallback(key: MapKey): (MapKey, ByteBuffer) = {
     val entry = impl.floorEntry(key)
     if (entry != null) {
       if (MapKey.equalWithoutSequence(entry.getKey(), key)) {
@@ -85,6 +86,14 @@ class PersistentMap private {
 
   def putVal(key: MapKey, value: ByteBuffer): Unit = {
     impl.put(key, value)
+  }
+
+  def putBatch(writeBatch: JMap[MapKey, ByteBuffer]): Unit = {
+    impl.putAll(writeBatch)
+  }
+
+  def delete(key: MapKey): Unit = {
+    impl.remove(key)
   }
 }
 

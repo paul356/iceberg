@@ -56,6 +56,14 @@ class QDTreeCut(
       throw new UnsupportedOperationException(classOf[QDTreeCut].getName)
     }
   }
+
+  override def equals(that: Any): Boolean = {
+    if (that == null || !that.isInstanceOf[QDTreeCut]) {
+      false
+    } else {
+      compare(that.asInstanceOf[QDTreeCut]) == 0
+    }
+  }
 }
 
 class QDTreeCutIterator(byteArr: ByteBuffer) extends Iterator[QDTreeCut] {

@@ -15,7 +15,7 @@ class ByteBufferInputFile(byteBufs: JList[ByteBuffer]) extends InputFile {
   }
 
   override def location: String = {
-    "@ByteAraryInputStream"
+    "file:///noplace.avro"
   }
 
   override def exists: Boolean = {

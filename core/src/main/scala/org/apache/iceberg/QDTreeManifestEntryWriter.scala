@@ -8,6 +8,7 @@ import java.util.{List => JList}
 import java.util.{Map => JMap}
 
 import org.apache.iceberg.CutOpType
+import org.apache.iceberg.ManifestEntry.Status
 import org.apache.iceberg.ManifestReader.FileType
 import org.apache.iceberg.avro.Avro
 import org.apache.iceberg.io.ByteBufferInputFile
@@ -32,18 +33,12 @@ class QDTreeManifestEntryWriter[T <: ContentFile[T]] private(
   createFileReader: (InputFile) => ManifestReader[T]) extends ManifestEntryAppender[T] {
   private val writeBatch = HashMap.empty[MapKey, List[ManifestEntry[T]]]
 
-  private lazy val specialKey = {
-    val simpleCut = new QDTreeCut(0, CutOpType.All, TypeID.BOOLEAN, null, null)
-    val byteBuffer = ByteBuffer.allocate(64)
-    QDTreeCut.toByteBuffer(byteBuffer, simpleCut)
-    byteBuffer.flip()
-    new MapKey(domain = CutSequence, byteBuf = byteBuffer, snapSequence = Long.MaxValue)
-  }
+  import QDTreeManifestEntryWriter.specialKey
 
-  private def getExistingManifest: Option[ByteBuffer] = {
-    val currentEntry = metaStore.getValWithSmallerSequence(specialKey)
+  private def getExistingManifest: Option[(MapKey, ByteBuffer)] = {
+    val currentEntry = metaStore.getValWithSequenceFallback(specialKey)
     if (currentEntry != null)
-      Some(currentEntry._2)
+      Some(currentEntry)
     else
       None
   }
@@ -57,17 +52,25 @@ class QDTreeManifestEntryWriter[T <: ContentFile[T]] private(
     } else {
       val existingManifest = getExistingManifest
       if (!existingManifest.isEmpty) {
+        val byteBuffer = existingManifest.get._2
+        val oldSequence = existingManifest.get._1.snapSequence
         Using.Manager{ use =>
-          val inputFile = new ByteBufferInputFile(List(existingManifest.get).asJava)
+          val inputFile = new ByteBufferInputFile(List(byteBuffer).asJava)
           // Copy old manifest entries
           val reader = use(createFileReader(inputFile))
           val entries = use(reader.liveEntries())
           val entryIter = use(entries.iterator())
           // Should I use existing()?
           val scalaIter = entryIter.asScala
-          scalaIter.map((entry) => {
-            val wrapper = new GenericManifestEntry[T](null.asInstanceOf[org.apache.avro.Schema])
-            wrapper.wrapExisting(entry.snapshotId(), entry.dataSequenceNumber(), entry.fileSequenceNumber(), entry.file())
+          scalaIter.map(entry => {
+            val newEntry = new GenericManifestEntry[T](null.asInstanceOf[org.apache.avro.Schema])
+            newEntry.set(0, Integer.valueOf(Status.EXISTING.id()))
+            newEntry.setSnapshotId(entry.snapshotId().longValue())
+            newEntry.setDataSequenceNumber(if (entry.dataSequenceNumber() == null) oldSequence else entry.dataSequenceNumber().longValue())
+            newEntry.set(3, entry.fileSequenceNumber())
+            newEntry.set(4, entry.file().copy(true))
+
+            newEntry
           }).toList
         }.get
       } else {
@@ -98,7 +101,7 @@ class QDTreeManifestEntryWriter[T <: ContentFile[T]] private(
       val newKey = new MapKey(pair._1.version, pair._1.domain, pair._1.getBytes, sequenceNumber)
       val bufs = outputFile.toByteBuffer
       if (bufs.size() == 1) {
-        metaStore.putVal(newKey, bufs.get(0))
+        (newKey, bufs.get(0))
       } else {
         val totalLen = bufs.asScala.foldLeft(0)((sum, entry) => {
           sum + entry.remaining()
@@ -109,8 +112,11 @@ class QDTreeManifestEntryWriter[T <: ContentFile[T]] private(
           entry.get(arr)
           combineBuf.put(arr)
         })
+        (newKey, combineBuf)
       }
     })
+    metaStore.putBatch(readyBatch.asJava)
+    writeBatch.clear()
   }
 }
 
@@ -118,6 +124,15 @@ object QDTreeManifestEntryWriter {
   private def createOldManifestReader[T <: ContentFile[T]](inputFile: InputFile, snapshotId: Long, content: FileType): ManifestReader[T] = {
     new ManifestReader[T](inputFile, 0, null, InheritableMetadataFactory.forCopy(snapshotId), content)
   }
+
+  lazy val specialKey = {
+    val simpleCut = new QDTreeCut(0, CutOpType.All, TypeID.BOOLEAN, null, null)
+    val byteBuffer = ByteBuffer.allocate(64)
+    QDTreeCut.toByteBuffer(byteBuffer, simpleCut)
+    byteBuffer.flip()
+    new MapKey(domain = CutSequence, byteBuf = byteBuffer, snapSequence = Long.MaxValue)
+  }
+
   def newDataWriter(metaStore: PersistentMap, version: Int, snapshotId: JLong): ManifestEntryAppender[DataFile] = {
     new QDTreeManifestEntryWriter(
       metaStore,version,
