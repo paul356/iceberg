@@ -25,11 +25,9 @@ import java.lang.{Long => JLong}
 import java.nio.ByteBuffer
 import java.util.{List => JList}
 import java.util.{Map => JMap}
-import org.apache.iceberg.io.ByteBufferInputFile
 import org.apache.iceberg.io.FileIO
 import org.apache.iceberg.util.KeyType
 import org.apache.iceberg.util.MapKey
-import org.apache.iceberg.util.PersistentMap
 
 import scala.jdk.CollectionConverters._
 
@@ -42,20 +40,17 @@ class QDTreeSnapshot(
   val summary: JMap[String, String],
   val manifestListLocation: String,
   override val schemaId: Integer) extends Snapshot {
-  private val metaStore: PersistentMap = PersistentMap.instance
 
   override def allManifests(io: FileIO): JList[ManifestFile] = {
     dataManifests(io)
   }
 
   override def dataManifests(io: FileIO): JList[ManifestFile] = {
-    val valBytes = metaStore.getVal(QDTreeSnapshot.dataManifestFileKey(sequenceNumber))
-    ManifestLists.read(new ByteBufferInputFile(List(valBytes).asJava))
+    ManifestLists.read(io.newInputFile(QDTreeSnapshot.dataManifestFileKey(sequenceNumber)))
   }
 
   override def deleteManifests(io: FileIO): JList[ManifestFile] = {
-    val valBytes = metaStore.getVal(QDTreeSnapshot.deleteManifestFileKey(sequenceNumber))
-    ManifestLists.read(new ByteBufferInputFile(List(valBytes).asJava))
+    ManifestLists.read(io.newInputFile(QDTreeSnapshot.deleteManifestFileKey(sequenceNumber)))
   }
 
   override def addedDataFiles(io: FileIO): JIterable[DataFile] = {
@@ -76,14 +71,14 @@ class QDTreeSnapshot(
 }
 
 object QDTreeSnapshot {
-  val dataManifestFileKeyTemplate = "manifestfile-%d-data"
-  val deleteManifestFileKeyTemplate = "manifestfile-%d-delete"
+  private val dataManifestFileKeyTemplate = "file://manifestfile-%d-data.avro"
+  private val deleteManifestFileKeyTemplate = "file://manifestfile-%d-delete.avro"
 
-  def dataManifestFileKey(sequenceNumber: Long): MapKey = {
-    new MapKey(domain = KeyType.ByteArray, byteBuf = ByteBuffer.wrap(dataManifestFileKeyTemplate.format(sequenceNumber).getBytes), snapSequence = sequenceNumber)
+  def dataManifestFileKey(snapshotId: Long): String = {
+    dataManifestFileKeyTemplate.format(snapshotId)
   }
 
-  def deleteManifestFileKey(sequenceNumber: Long): MapKey = {
-    new MapKey(domain = KeyType.ByteArray, byteBuf = ByteBuffer.wrap(deleteManifestFileKeyTemplate.format(sequenceNumber).getBytes), snapSequence = sequenceNumber)
+  def deleteManifestFileKey(snapshotId: Long): String = {
+    deleteManifestFileKeyTemplate.format(snapshotId)
   }
 }

@@ -3,7 +3,7 @@ package org.apache.iceberg
 import java.lang.{Long => JLong}
 
 import org.apache.iceberg.ManifestReader.FileType
-import org.apache.iceberg.io.ByteBufferInputFile
+import org.apache.iceberg.io.QDTreeKvdbInputFile
 import org.apache.iceberg.util.PersistentMap
 
 import org.junit.Assert._
@@ -25,14 +25,7 @@ class TestQDTreeManifestEntryWriter {
   }
 
   private def getAllSet: List[ManifestEntry[DataFile]] = {
-    val pair = PersistentMap.instance.getValWithSequenceFallback(QDTreeManifestEntryWriter.specialKey)
-    if (pair == null) {
-      return null
-    }
-
-    val buf = pair._2.duplicate()
-    buf.rewind()
-    val inputFile = new ByteBufferInputFile(List(buf).asJava)
+    val inputFile = new QDTreeKvdbInputFile(QDTreeManifestEntryWriter.specialKey, PersistentMap.instance)
     Using.Manager { use =>
       val reader = use(new ManifestReader[DataFile](inputFile, 0, null, InheritableMetadataFactory.empty(), FileType.DATA_FILES))
       val entryIterable = use(reader.liveEntries())
@@ -73,7 +66,7 @@ class TestQDTreeManifestEntryWriter {
 
     clearOldKey
 
-    val writer1 = QDTreeManifestEntryWriter.newDataWriter(metaStore, 1, snapshot)
+    val writer1 = QDTreeManifestEntryWriter.newDataWriter(metaStore, 2, snapshot)
     val dataFile1 = new GenericDataFile(
       0,
       "file://first-file",

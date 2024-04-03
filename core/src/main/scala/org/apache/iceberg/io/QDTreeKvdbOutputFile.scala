@@ -6,17 +6,42 @@ import java.util.{List => JList}
 
 import org.apache.avro.util.ByteBufferOutputStream
 import org.apache.iceberg.exceptions.AlreadyExistsException
-
+import org.apache.iceberg.util.MapKey
+import org.apache.iceberg.util.PersistentMap
 import scala.jdk.CollectionConverters._
 
-class ByteBufferOutputFile extends OutputFile {
+class QDTreeKvdbOutputFile(path: MapKey, metaStore: PersistentMap) extends OutputFile {
   class ByteBufferPositionOutputStream extends PositionOutputStream {
     private var offset: Long = 0
+    private var closed = false
     private val byteBufferStream = new ByteBufferOutputStream
 
     override def getPos: Long = offset
 
-    override def close = byteBufferStream.close()
+    override def close: Unit = {
+      if (closed) {
+        return
+      }
+
+      closed = true
+      byteBufferStream.close()
+
+      val bufs = byteBufferStream.getBufferList()
+      if (bufs.size() == 1) {
+        metaStore.putVal(path, bufs.get(0))
+      } else {
+        val totalLen = bufs.asScala.foldLeft(0)((sum, entry) => {
+          sum + entry.remaining()
+        })
+        val combinedBuf = ByteBuffer.allocateDirect(totalLen)
+        bufs.asScala.foreach((entry) => {
+          val arr = Array.ofDim[Byte](entry.remaining())
+          entry.get(arr)
+          combinedBuf.put(arr)
+        })
+        metaStore.putVal(path, combinedBuf)
+      }
+    }
 
     override def flush = byteBufferStream.flush()
 
@@ -34,18 +59,6 @@ class ByteBufferOutputFile extends OutputFile {
       byteBufferStream.write(b)
       offset += 1
     }
-
-    def writeBuffer(byteBuf: ByteBuffer): Unit = {
-      byteBufferStream.writeBuffer(byteBuf)
-      offset += byteBuf.remaining()
-    }
-
-    def append(byteBufs: List[ByteBuffer]): Unit = {
-      byteBufferStream.append(byteBufs.asJava)
-      offset += byteBufs.foldLeft(0)((a, b) => a + b.remaining())
-    }
-
-    def toByteBuffer: JList[ByteBuffer] = byteBufferStream.getBufferList()
   }
 
   private var positionStream: ByteBufferPositionOutputStream = null
@@ -64,18 +77,16 @@ class ByteBufferOutputFile extends OutputFile {
     positionStream
   }
 
-  override def location: String = {
-    "@ByteBufferOutputStream"
+  override lazy val location: String = {
+    QDTreeKvdbUtils.getPathFromKey(path)
   }
 
   override def toInputFile: InputFile = {
-    val arr = positionStream.toByteBuffer
-    new ByteBufferInputFile(arr)
+    if (positionStream != null) {
+      positionStream.close()
+      new QDTreeKvdbInputFile(path, metaStore)
+    } else {
+      return null
+    }
   }
-
-  def writeBuffer(byteBuf: ByteBuffer): Unit = positionStream.writeBuffer(byteBuf)
-
-  def append(byteBufs: List[ByteBuffer]): Unit = positionStream.append(byteBufs)
-
-  def toByteBuffer: JList[ByteBuffer] = positionStream.toByteBuffer
 }

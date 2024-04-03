@@ -4,38 +4,40 @@ import java.nio.ByteBuffer
 
 import org.junit.Assert._
 import org.junit.Test
+import org.junit.Before
+import org.junit.After
 
 import scala.jdk.CollectionConverters._
 
 class TestByteArrayInputOutput {
+  val writeKey = "bytearrayiokey"
+
+  @Before
+  def setUp: Unit = {
+    QDTreeKvdbFileIO.deleteFile(writeKey)
+  }
+
+  @After
+  def tearDown: Unit = {
+    QDTreeKvdbFileIO.deleteFile(writeKey)
+  }
+
   @Test
   def testByteArrayOutput: Unit = {
-    val outputFile = new ByteBufferOutputFile
+    val outputFile = QDTreeKvdbFileIO.newOutputFile(writeKey)
     val positionOutputStream = outputFile.create
     positionOutputStream.write(Array[Byte]('1', '2', '3'))
     positionOutputStream.write('a')
     positionOutputStream.write('b')
     positionOutputStream.write('c')
     positionOutputStream.write(Array[Byte]('1', '2', '3', '4', '5', '6'), 3, 3)
-    val bufList = positionOutputStream.asInstanceOf[outputFile.ByteBufferPositionOutputStream].toByteBuffer.asScala
-    val str = bufList.foldLeft(List.empty[Char])((a, b) => {
-      val dup = b.duplicate()
-      var lst = List.empty[Char]
-      while (b.remaining() > 0) {
-        lst = lst :+ b.get().toChar
-      }
-      a ++ lst
-    }).mkString
-    print(str)
-    assertTrue(str == "123abc456")
-  }
 
-  @Test
-  def testByteArrayInput: Unit = {
-    val byteArr = Array[Byte]('1', '2', '3', 'a', 'b', 'c', '4', '5', '6')
-    val inputFile = new ByteBufferInputFile(List(ByteBuffer.wrap(byteArr)).asJava)
+    positionOutputStream.close()
+
+    val inputFile = QDTreeKvdbFileIO.newInputFile(writeKey)
     val inputStream = inputFile.newStream
 
+    val byteArr = Array[Byte]('1', '2', '3', 'a', 'b', 'c', '4', '5', '6')
     assertTrue(inputStream.available == byteArr.length)
     assertTrue(inputStream.markSupported == true)
 
@@ -54,5 +56,6 @@ class TestByteArrayInputOutput {
     inputStream.read(readArr2)
 
     assertTrue(byteArr.sameElements(readArr2))
+    inputStream.close()
   }
 }

@@ -12,8 +12,8 @@ import org.apache.iceberg.ManifestEntry.Status
 import org.apache.iceberg.ManifestReader.FileType
 import org.apache.iceberg.ManifestWriter.UNASSIGNED_SEQ
 import org.apache.iceberg.avro.Avro
-import org.apache.iceberg.io.ByteBufferInputFile
-import org.apache.iceberg.io.ByteBufferOutputFile
+import org.apache.iceberg.io.QDTreeKvdbInputFile
+import org.apache.iceberg.io.QDTreeKvdbOutputFile
 import org.apache.iceberg.io.FileAppender
 import org.apache.iceberg.io.InputFile
 import org.apache.iceberg.io.OutputFile
@@ -44,14 +44,6 @@ class QDTreeManifestEntryWriter[T <: ContentFile[T]] private(
 
   import QDTreeManifestEntryWriter.specialKey
 
-  private def getExistingManifest: Option[(MapKey, ByteBuffer)] = {
-    val currentEntry = metaStore.getValWithSequenceFallback(specialKey)
-    if (currentEntry != null)
-      Some(currentEntry)
-    else
-      None
-  }
-
   override def add(datum: T): Unit = {
     // 1. get lower & upper bounds from data file
     // 2. query the existing dataset
@@ -59,17 +51,15 @@ class QDTreeManifestEntryWriter[T <: ContentFile[T]] private(
     val oldEntries: List[ManifestEntry[T]] = if (writeBatch.contains(specialKey)) {
       writeBatch.get(specialKey).get
     } else {
-      val existingManifest = getExistingManifest
-      if (!existingManifest.isEmpty) {
-        val byteBuffer = existingManifest.get._2
-        val oldSequence = existingManifest.get._1.snapSequence
+      val inputFile = new QDTreeKvdbInputFile(specialKey, metaStore)
+      if (inputFile.exists) {
         Using.Manager{ use =>
-          val inputFile = new ByteBufferInputFile(List(byteBuffer).asJava)
           // Copy old manifest entries
           val reader = use(createFileReader(inputFile))
           val entries = use(reader.liveEntries())
           val entryIter = use(entries.iterator())
           val scalaIter = entryIter.asScala
+          val oldSequence = inputFile.getFoundKey.snapSequence
           scalaIter.map(entry => {
             val newEntry = new GenericManifestEntry[T](null.asInstanceOf[org.apache.avro.Schema])
             newEntry.set(0, Integer.valueOf(Status.EXISTING.id()))
@@ -106,7 +96,7 @@ class QDTreeManifestEntryWriter[T <: ContentFile[T]] private(
 
   override def toManifestFiles: JList[ManifestFile] = {
     List[ManifestFile](new GenericManifestFile(
-      "file://nomanifest.avro",
+      QDTreeSnapshot.dataManifestFileKey(snapshotId.longValue()),
       0,
       0,
       content,
@@ -127,29 +117,13 @@ class QDTreeManifestEntryWriter[T <: ContentFile[T]] private(
   }
 
   override def commit(sequenceNumber: Long): Unit = {
-    val readyBatch = writeBatch.map((pair) => {
-      val outputFile = new ByteBufferOutputFile
+    val readyBatch = writeBatch.foreach((pair) => {
+      val newKey = new MapKey(pair._1.version, pair._1.domain, pair._1.getBytes, sequenceNumber)
+      val outputFile = new QDTreeKvdbOutputFile(newKey, metaStore)
       Using(createFileWriter(outputFile)) { writer =>
         pair._2.foreach(writer.addEntry(_))
       }.get
-      val newKey = new MapKey(pair._1.version, pair._1.domain, pair._1.getBytes, sequenceNumber)
-      val bufs = outputFile.toByteBuffer
-      if (bufs.size() == 1) {
-        (newKey, bufs.get(0))
-      } else {
-        val totalLen = bufs.asScala.foldLeft(0)((sum, entry) => {
-          sum + entry.remaining()
-        })
-        val combineBuf = ByteBuffer.allocateDirect(totalLen)
-        bufs.asScala.foreach((entry) => {
-          val arr = Array.ofDim[Byte](entry.remaining())
-          entry.get(arr)
-          combineBuf.put(arr)
-        })
-        (newKey, combineBuf)
-      }
     })
-    metaStore.putBatch(readyBatch.asJava)
     writeBatch.clear()
   }
 }
