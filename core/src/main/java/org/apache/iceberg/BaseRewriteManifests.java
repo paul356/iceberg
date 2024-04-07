@@ -253,7 +253,7 @@ public class BaseRewriteManifests extends SnapshotProducer<RewriteManifests>
                   keptManifests.add(manifest);
                 } else {
                   rewrittenManifests.add(manifest);
-                  try (ManifestReader<DataFile> reader =
+                  try (ManifestFileParser<DataFile> reader =
                       ManifestFiles.read(manifest, ops.io(), ops.current().specsById())
                           .select(Arrays.asList("*"))) {
                     reader

@@ -1046,7 +1046,7 @@ abstract class MergingSnapshotProducer<ThisT> extends SnapshotProducer<ThisT> {
     }
 
     @Override
-    protected ManifestReader<DataFile> newManifestReader(ManifestFile manifest) {
+    protected ManifestFileParser<DataFile> newManifestReader(ManifestFile manifest) {
       return MergingSnapshotProducer.this.newManifestReader(manifest);
     }
   }
@@ -1078,7 +1078,7 @@ abstract class MergingSnapshotProducer<ThisT> extends SnapshotProducer<ThisT> {
     }
 
     @Override
-    protected ManifestReader<DataFile> newManifestReader(ManifestFile manifest) {
+    protected ManifestFileParser<DataFile> newManifestReader(ManifestFile manifest) {
       return MergingSnapshotProducer.this.newManifestReader(manifest);
     }
   }
@@ -1099,7 +1099,7 @@ abstract class MergingSnapshotProducer<ThisT> extends SnapshotProducer<ThisT> {
     }
 
     @Override
-    protected ManifestReader<DeleteFile> newManifestReader(ManifestFile manifest) {
+    protected ManifestFileParser<DeleteFile> newManifestReader(ManifestFile manifest) {
       return MergingSnapshotProducer.this.newDeleteManifestReader(manifest);
     }
   }
@@ -1131,7 +1131,7 @@ abstract class MergingSnapshotProducer<ThisT> extends SnapshotProducer<ThisT> {
     }
 
     @Override
-    protected ManifestReader<DeleteFile> newManifestReader(ManifestFile manifest) {
+    protected ManifestFileParser<DeleteFile> newManifestReader(ManifestFile manifest) {
       return MergingSnapshotProducer.this.newDeleteManifestReader(manifest);
     }
   }

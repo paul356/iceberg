@@ -51,8 +51,7 @@ import org.apache.iceberg.util.PartitionSet;
  *
  * @param <F> The Java class of files returned by this reader.
  */
-public class ManifestReader<F extends ContentFile<F>> extends CloseableGroup
-    implements CloseableIterable<F> {
+public class ManifestReader<F extends ContentFile<F>> extends CloseableGroup implements ManifestFileParser<F> {
   static final ImmutableList<String> ALL_COLUMNS = ImmutableList.of("*");
 
   private static final Set<String> STATS_COLUMNS =
@@ -197,12 +196,12 @@ public class ManifestReader<F extends ContentFile<F>> extends CloseableGroup
     return this;
   }
 
-  ManifestReader<F> scanMetrics(ScanMetrics newScanMetrics) {
+  public ManifestReader<F> scanMetrics(ScanMetrics newScanMetrics) {
     this.scanMetrics = newScanMetrics;
     return this;
   }
 
-  CloseableIterable<ManifestEntry<F>> entries() {
+  public CloseableIterable<ManifestEntry<F>> entries() {
     return entries(false /* all entries */);
   }
 
@@ -279,7 +278,7 @@ public class ManifestReader<F extends ContentFile<F>> extends CloseableGroup
     }
   }
 
-  CloseableIterable<ManifestEntry<F>> liveEntries() {
+  public CloseableIterable<ManifestEntry<F>> liveEntries() {
     return entries(true /* only live entries */);
   }
 

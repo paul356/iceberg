@@ -135,7 +135,7 @@ public class CatalogUtil {
                 LOG.warn("Failed to get deleted files: this may cause orphaned data files", exc))
         .run(
             manifest -> {
-              try (ManifestReader<?> reader = ManifestFiles.open(manifest, io)) {
+              try (ManifestFileParser<?> reader = ManifestFiles.open(manifest, io)) {
                 List<String> pathsToDelete = Lists.newArrayList();
                 for (ManifestEntry<?> entry : reader.entries()) {
                   // intern the file path because the weak key map uses identity (==) instead of

@@ -71,6 +71,7 @@ class QDTreeSnapshot(
 }
 
 object QDTreeSnapshot {
+  // -\d*- is the sequence number
   private val dataManifestFileKeyTemplate = "file://manifestfile-%d-data.avro"
   private val deleteManifestFileKeyTemplate = "file://manifestfile-%d-delete.avro"
 

@@ -517,11 +517,11 @@ abstract class SnapshotProducer<ThisT> implements SnapshotUpdate<ThisT> {
         () -> newDeleteManifestWriter(spec), targetManifestSizeBytes);
   }
 
-  protected ManifestReader<DataFile> newManifestReader(ManifestFile manifest) {
+  protected ManifestFileParser<DataFile> newManifestReader(ManifestFile manifest) {
     return ManifestFiles.read(manifest, ops.io(), ops.current().specsById());
   }
 
-  protected ManifestReader<DeleteFile> newDeleteManifestReader(ManifestFile manifest) {
+  protected ManifestFileParser<DeleteFile> newDeleteManifestReader(ManifestFile manifest) {
     return ManifestFiles.readDeleteManifest(manifest, ops.io(), ops.current().specsById());
   }
 
@@ -537,7 +537,7 @@ abstract class SnapshotProducer<ThisT> implements SnapshotUpdate<ThisT> {
   }
 
   private static ManifestFile addMetadata(TableOperations ops, ManifestFile manifest) {
-    try (ManifestReader<DataFile> reader =
+    try (ManifestFileParser<DataFile> reader =
         ManifestFiles.read(manifest, ops.io(), ops.current().specsById())) {
       PartitionSummary stats = new PartitionSummary(ops.current().spec(manifest.partitionSpecId()));
       int addedFiles = 0;

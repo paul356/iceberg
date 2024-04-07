@@ -307,7 +307,7 @@ class ManifestGroup {
 
               @Override
               public CloseableIterator<T> iterator() {
-                ManifestReader<DataFile> reader =
+                ManifestFileParser<DataFile> reader =
                     ManifestFiles.read(manifest, io, specsById)
                         .filterRows(dataFilter)
                         .filterPartitions(partitionFilter)

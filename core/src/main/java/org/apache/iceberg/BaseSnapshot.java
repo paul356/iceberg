@@ -230,7 +230,7 @@ class BaseSnapshot implements Snapshot {
             deleteManifests(fileIO), manifest -> Objects.equal(manifest.snapshotId(), snapshotId));
 
     for (ManifestFile manifest : changedManifests) {
-      try (ManifestReader<DeleteFile> reader =
+      try (ManifestFileParser<DeleteFile> reader =
           ManifestFiles.readDeleteManifest(manifest, fileIO, null)) {
         for (ManifestEntry<DeleteFile> entry : reader.entries()) {
           switch (entry.status()) {

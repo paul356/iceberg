@@ -67,7 +67,7 @@ abstract class ManifestMergeManager<F extends ContentFile<F>> {
 
   protected abstract ManifestWriter<F> newManifestWriter(PartitionSpec spec);
 
-  protected abstract ManifestReader<F> newManifestReader(ManifestFile manifest);
+  protected abstract ManifestFileParser<F> newManifestReader(ManifestFile manifest);
 
   Iterable<ManifestFile> mergeManifests(Iterable<ManifestFile> manifests) {
     Iterator<ManifestFile> manifestIter = manifests.iterator();
@@ -172,7 +172,7 @@ abstract class ManifestMergeManager<F extends ContentFile<F>> {
     boolean threw = true;
     try {
       for (ManifestFile manifest : bin) {
-        try (ManifestReader<F> reader = newManifestReader(manifest)) {
+        try (ManifestFileParser<F> reader = newManifestReader(manifest)) {
           for (ManifestEntry<F> entry : reader.entries()) {
             if (entry.status() == Status.DELETED) {
               // suppress deletes from previous snapshots. only files deleted by this snapshot

@@ -100,7 +100,7 @@ abstract class ManifestFilterManager<F extends ContentFile<F>> {
 
   protected abstract ManifestWriter<F> newManifestWriter(PartitionSpec spec);
 
-  protected abstract ManifestReader<F> newManifestReader(ManifestFile manifest);
+  protected abstract ManifestFileParser<F> newManifestReader(ManifestFile manifest);
 
   protected void failAnyDelete() {
     this.failAnyDelete = true;
@@ -302,7 +302,7 @@ abstract class ManifestFilterManager<F extends ContentFile<F>> {
       return manifest;
     }
 
-    try (ManifestReader<F> reader = newManifestReader(manifest)) {
+    try (ManifestFileParser<F> reader = newManifestReader(manifest)) {
       PartitionSpec spec = reader.spec();
       PartitionAndMetricsEvaluator evaluator =
           new PartitionAndMetricsEvaluator(tableSchema, spec, deleteExpression);
@@ -365,7 +365,7 @@ abstract class ManifestFilterManager<F extends ContentFile<F>> {
 
   @SuppressWarnings({"CollectionUndefinedEquality", "checkstyle:CyclomaticComplexity"})
   private boolean manifestHasDeletedFiles(
-      PartitionAndMetricsEvaluator evaluator, ManifestReader<F> reader) {
+      PartitionAndMetricsEvaluator evaluator, ManifestFileParser<F> reader) {
     boolean isDelete = reader.isDeleteManifestReader();
 
     for (ManifestEntry<F> entry : reader.liveEntries()) {
@@ -403,7 +403,7 @@ abstract class ManifestFilterManager<F extends ContentFile<F>> {
 
   @SuppressWarnings({"CollectionUndefinedEquality", "checkstyle:CyclomaticComplexity"})
   private ManifestFile filterManifestWithDeletedFiles(
-      PartitionAndMetricsEvaluator evaluator, ManifestFile manifest, ManifestReader<F> reader) {
+      PartitionAndMetricsEvaluator evaluator, ManifestFile manifest, ManifestFileParser<F> reader) {
     boolean isDelete = reader.isDeleteManifestReader();
     // when this point is reached, there is at least one file that will be deleted in the
     // manifest. produce a copy of the manifest with all deleted files removed.

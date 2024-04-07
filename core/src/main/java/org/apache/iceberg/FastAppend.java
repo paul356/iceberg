@@ -65,8 +65,7 @@ class FastAppend extends SnapshotProducer<AppendFiles> implements AppendFiles {
         ops.current()
             .propertyAsBoolean(
                 SNAPSHOT_ID_INHERITANCE_ENABLED, SNAPSHOT_ID_INHERITANCE_ENABLED_DEFAULT);
-    this.manifestInKvdb =
-      ops.current().propertyAsBoolean(MANIFEST_IN_KVDB, MANIFEST_IN_KVDB_DEFAULT);
+    this.manifestInKvdb = MANIFEST_IN_KVDB_DEFAULT;
   }
 
   @Override
@@ -214,7 +213,7 @@ class FastAppend extends SnapshotProducer<AppendFiles> implements AppendFiles {
 
     if (newManifests == null && newFiles.size() > 0) {
       ManifestEntryAppender<DataFile> writer;
-      if (manifestInKvdb && ops.current().formatVersion() > 1) {
+      if (manifestInKvdb) {
         writer = QDTreeManifestEntryWriter.newDataWriter(PersistentMap$.MODULE$.instance(), ops.current().formatVersion(), snapshotId());
       } else {
         writer = newRollingManifestWriter(spec);

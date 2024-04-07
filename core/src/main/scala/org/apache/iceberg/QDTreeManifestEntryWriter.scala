@@ -142,19 +142,19 @@ object QDTreeManifestEntryWriter {
   }
 
   def newDataWriter(metaStore: PersistentMap, version: Int, snapshotId: JLong): ManifestEntryAppender[DataFile] = {
-    if (version < 2) {
-      throw new IllegalArgumentException("version should be >= 2")
-    }
     new QDTreeManifestEntryWriter(
       metaStore,
       snapshotId,
       ManifestContent.DATA,
-      new ManifestWriter.V2Writer(PartitionSpec.unpartitioned(), _, snapshotId),
+      if (version < 2)
+        new ManifestWriter.V1Writer(PartitionSpec.unpartitioned(), _, snapshotId)
+      else
+        new ManifestWriter.V2Writer(PartitionSpec.unpartitioned(), _, snapshotId),
       createOldManifestReader(_, snapshotId.longValue(), FileType.DATA_FILES))
   }
   def newDeleteWriter(metaStore: PersistentMap, version: Int, snapshotId: JLong): ManifestEntryAppender[DeleteFile] = {
     if (version < 2) {
-      throw new IllegalArgumentException("version should be >= 2")
+      throw new IllegalArgumentException("not delete files for version < 2")
     }
     new QDTreeManifestEntryWriter(
       metaStore,

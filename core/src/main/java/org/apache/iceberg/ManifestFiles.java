@@ -98,7 +98,7 @@ public class ManifestFiles {
   }
 
   /**
-   * Returns a new {@link ManifestReader} for a {@link ManifestFile}.
+   * Returns a new {@link ManifestFileParser} for a {@link ManifestFile}.
    *
    * <p><em>Note:</em> Callers should use {@link ManifestFiles#read(ManifestFile, FileIO, Map)} to
    * ensure the schema used by filters is the latest table schema. This should be used only when
@@ -108,23 +108,23 @@ public class ManifestFiles {
    * @param io a FileIO
    * @return a manifest reader
    */
-  public static ManifestReader<DataFile> read(ManifestFile manifest, FileIO io) {
+  public static ManifestFileParser<DataFile> read(ManifestFile manifest, FileIO io) {
     return read(manifest, io, null);
   }
 
   /**
-   * Returns a new {@link ManifestReader} for a {@link ManifestFile}.
+   * Returns a new {@link ManifestFileParser} for a {@link ManifestFile}.
    *
    * @param manifest a {@link ManifestFile}
    * @param io a {@link FileIO}
    * @param specsById a Map from spec ID to partition spec
-   * @return a {@link ManifestReader}
+   * @return a {@link ManifestFileParser}
    */
-  public static ManifestReader<DataFile> read(
+  public static ManifestFileParser<DataFile> read(
       ManifestFile manifest, FileIO io, Map<Integer, PartitionSpec> specsById) {
     Preconditions.checkArgument(
         manifest.content() == ManifestContent.DATA,
-        "Cannot read a delete manifest with a ManifestReader: %s",
+        "Cannot read a delete manifest with a ManifestFileParser: %s",
         manifest);
     InputFile file = newInputFile(io, manifest.path(), manifest.length());
     InheritableMetadata inheritableMetadata = InheritableMetadataFactory.fromManifest(manifest);
@@ -168,18 +168,18 @@ public class ManifestFiles {
   }
 
   /**
-   * Returns a new {@link ManifestReader} for a {@link ManifestFile}.
+   * Returns a new {@link ManifestFileParser} for a {@link ManifestFile}.
    *
    * @param manifest a {@link ManifestFile}
    * @param io a {@link FileIO}
    * @param specsById a Map from spec ID to partition spec
-   * @return a {@link ManifestReader}
+   * @return a {@link ManifestFileParser}
    */
-  public static ManifestReader<DeleteFile> readDeleteManifest(
+  public static ManifestFileParser<DeleteFile> readDeleteManifest(
       ManifestFile manifest, FileIO io, Map<Integer, PartitionSpec> specsById) {
     Preconditions.checkArgument(
         manifest.content() == ManifestContent.DELETES,
-        "Cannot read a data manifest with a DeleteManifestReader: %s",
+        "Cannot read a data manifest with a DeleteManifestFileParser: %s",
         manifest);
     InputFile file = newInputFile(io, manifest.path(), manifest.length());
     InheritableMetadata inheritableMetadata = InheritableMetadataFactory.fromManifest(manifest);
@@ -233,11 +233,11 @@ public class ManifestFiles {
     return AvroEncoderUtil.decode(manifestData);
   }
 
-  static ManifestReader<?> open(ManifestFile manifest, FileIO io) {
+  static ManifestFileParser<?> open(ManifestFile manifest, FileIO io) {
     return open(manifest, io, null);
   }
 
-  static ManifestReader<?> open(
+  static ManifestFileParser<?> open(
       ManifestFile manifest, FileIO io, Map<Integer, PartitionSpec> specsById) {
     switch (manifest.content()) {
       case DATA:
@@ -259,7 +259,7 @@ public class ManifestFiles {
       SnapshotSummary.Builder summaryBuilder) {
     // use metadata that will add the current snapshot's ID for the rewrite
     InheritableMetadata inheritableMetadata = InheritableMetadataFactory.forCopy(snapshotId);
-    try (ManifestReader<DataFile> reader =
+    try (ManifestFileParser<DataFile> reader =
         new ManifestReader<>(toCopy, specId, specsById, inheritableMetadata, FileType.DATA_FILES)) {
       return copyManifestInternal(
           formatVersion,
@@ -284,7 +284,7 @@ public class ManifestFiles {
     // for a rewritten manifest all snapshot ids should be set. use empty metadata to throw an
     // exception if it is not
     InheritableMetadata inheritableMetadata = InheritableMetadataFactory.empty();
-    try (ManifestReader<DataFile> reader =
+    try (ManifestFileParser<DataFile> reader =
         new ManifestReader<>(toCopy, specId, specsById, inheritableMetadata, FileType.DATA_FILES)) {
       return copyManifestInternal(
           formatVersion,
@@ -301,7 +301,7 @@ public class ManifestFiles {
   @SuppressWarnings("Finally")
   private static ManifestFile copyManifestInternal(
       int formatVersion,
-      ManifestReader<DataFile> reader,
+      ManifestFileParser<DataFile> reader,
       OutputFile outputFile,
       long snapshotId,
       SnapshotSummary.Builder summaryBuilder,

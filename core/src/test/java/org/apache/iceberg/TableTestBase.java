@@ -33,6 +33,7 @@ import java.util.UUID;
 import org.apache.iceberg.deletes.PositionDelete;
 import org.apache.iceberg.io.FileIO;
 import org.apache.iceberg.io.OutputFile;
+import org.apache.iceberg.io.QDTreeKvdbFileIO$;
 import org.apache.iceberg.relocated.com.google.common.collect.ImmutableList;
 import org.apache.iceberg.relocated.com.google.common.collect.ImmutableMap;
 import org.apache.iceberg.relocated.com.google.common.collect.ImmutableSet;
@@ -163,7 +164,7 @@ public class TableTestBase {
           .withFileSizeInBytes(350)
           .build();
 
-  static final FileIO FILE_IO = new TestTables.LocalFileIO();
+  static final FileIO FILE_IO = TableProperties.MANIFEST_IN_KVDB_DEFAULT ? QDTreeKvdbFileIO$.MODULE$ : new TestTables.LocalFileIO();
 
   @Rule public TemporaryFolder temp = new TemporaryFolder();
 

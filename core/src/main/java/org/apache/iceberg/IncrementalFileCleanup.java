@@ -285,7 +285,7 @@ class IncrementalFileCleanup extends FileCleanupStrategy {
         .run(
             manifest -> {
               // the manifest has deletes, scan it to find files to delete
-              try (ManifestReader<?> reader =
+              try (ManifestFileParser<?> reader =
                   ManifestFiles.open(manifest, fileIO, current.specsById())) {
                 for (ManifestEntry<?> entry : reader.entries()) {
                   // if the snapshot ID of the DELETE entry is no longer valid, the data can be
@@ -311,7 +311,7 @@ class IncrementalFileCleanup extends FileCleanupStrategy {
         .run(
             manifest -> {
               // the manifest has deletes, scan it to find files to delete
-              try (ManifestReader<?> reader =
+              try (ManifestFileParser<?> reader =
                   ManifestFiles.open(manifest, fileIO, current.specsById())) {
                 for (ManifestEntry<?> entry : reader.entries()) {
                   // delete any ADDED file from manifests that were reverted
