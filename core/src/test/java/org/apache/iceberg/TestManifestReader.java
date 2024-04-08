@@ -58,7 +58,7 @@ public class TestManifestReader extends TableTestBase {
   @Test
   public void testManifestReaderWithEmptyInheritableMetadata() throws IOException {
     ManifestFile manifest = writeManifest(1000L, manifestEntry(Status.EXISTING, 1000L, FILE_A));
-    try (ManifestReader<DataFile> reader = ManifestFiles.read(manifest, FILE_IO)) {
+    try (ManifestFileParser<DataFile> reader = ManifestFiles.read(manifest, FILE_IO)) {
       ManifestEntry<DataFile> entry = Iterables.getOnlyElement(reader.entries());
       Assert.assertEquals(Status.EXISTING, entry.status());
       Assert.assertEquals(FILE_A.path(), entry.file().path());
@@ -69,7 +69,7 @@ public class TestManifestReader extends TableTestBase {
   @Test
   public void testReaderWithFilterWithoutSelect() throws IOException {
     ManifestFile manifest = writeManifest(1000L, FILE_A, FILE_B, FILE_C);
-    try (ManifestReader<DataFile> reader =
+    try (ManifestFileParser<DataFile> reader =
         ManifestFiles.read(manifest, FILE_IO).filterRows(Expressions.equal("id", 0))) {
       List<DataFile> files = Streams.stream(reader).collect(Collectors.toList());
 
@@ -93,7 +93,7 @@ public class TestManifestReader extends TableTestBase {
   @Test
   public void testManifestReaderWithPartitionMetadata() throws IOException {
     ManifestFile manifest = writeManifest(1000L, manifestEntry(Status.EXISTING, 123L, FILE_A));
-    try (ManifestReader<DataFile> reader = ManifestFiles.read(manifest, FILE_IO)) {
+    try (ManifestFileParser<DataFile> reader = ManifestFiles.read(manifest, FILE_IO)) {
       ManifestEntry<DataFile> entry = Iterables.getOnlyElement(reader.entries());
       Assert.assertEquals(123L, (long) entry.snapshotId());
 
@@ -113,7 +113,7 @@ public class TestManifestReader extends TableTestBase {
     table.ops().commit(table.ops().current(), table.ops().current().updatePartitionSpec(spec));
 
     ManifestFile manifest = writeManifest(1000L, manifestEntry(Status.EXISTING, 123L, FILE_A));
-    try (ManifestReader<DataFile> reader = ManifestFiles.read(manifest, FILE_IO)) {
+    try (ManifestFileParser<DataFile> reader = ManifestFiles.read(manifest, FILE_IO)) {
       ManifestEntry<DataFile> entry = Iterables.getOnlyElement(reader.entries());
       Assert.assertEquals(123L, (long) entry.snapshotId());
 
@@ -133,7 +133,7 @@ public class TestManifestReader extends TableTestBase {
   @Test
   public void testDataFilePositions() throws IOException {
     ManifestFile manifest = writeManifest(1000L, FILE_A, FILE_B, FILE_C);
-    try (ManifestReader<DataFile> reader = ManifestFiles.read(manifest, FILE_IO)) {
+    try (ManifestFileParser<DataFile> reader = ManifestFiles.read(manifest, FILE_IO)) {
       long expectedPos = 0L;
       for (DataFile file : reader) {
         Assert.assertEquals("Position should match", (Long) expectedPos, file.pos());
@@ -149,7 +149,7 @@ public class TestManifestReader extends TableTestBase {
     Assume.assumeTrue("Delete files only work for format version 2", formatVersion == 2);
     ManifestFile manifest =
         writeDeleteManifest(formatVersion, 1000L, FILE_A_DELETES, FILE_B_DELETES);
-    try (ManifestReader<DeleteFile> reader =
+    try (ManifestFileParser<DeleteFile> reader =
         ManifestFiles.readDeleteManifest(manifest, FILE_IO, null)) {
       long expectedPos = 0L;
       for (DeleteFile file : reader) {
@@ -171,7 +171,7 @@ public class TestManifestReader extends TableTestBase {
             .withSplitOffsets(ImmutableList.of(2L, 1000L)) // Offset 1000 is out of bounds
             .build();
     ManifestFile manifest = writeManifest(1000L, invalidOffset);
-    try (ManifestReader<DataFile> reader = ManifestFiles.read(manifest, FILE_IO)) {
+    try (ManifestFileParser<DataFile> reader = ManifestFiles.read(manifest, FILE_IO)) {
       DataFile file = Iterables.getOnlyElement(reader);
       Assertions.assertThat(file.splitOffsets()).isNull();
     }

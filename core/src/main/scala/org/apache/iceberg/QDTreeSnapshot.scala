@@ -72,8 +72,8 @@ class QDTreeSnapshot(
 
 object QDTreeSnapshot {
   // -\d*- is the sequence number
-  private val dataManifestFileKeyTemplate = "file://manifestfile-%d-data.avro"
-  private val deleteManifestFileKeyTemplate = "file://manifestfile-%d-delete.avro"
+  private val dataManifestFileKeyTemplate = "file://qrtree-%d-data.avro"
+  private val deleteManifestFileKeyTemplate = "file://qrtree-%d-delete.avro"
 
   def dataManifestFileKey(snapshotId: Long): String = {
     dataManifestFileKeyTemplate.format(snapshotId)
@@ -81,5 +81,15 @@ object QDTreeSnapshot {
 
   def deleteManifestFileKey(snapshotId: Long): String = {
     deleteManifestFileKeyTemplate.format(snapshotId)
+  }
+
+  def isDataManifestFile(path: String): Boolean = {
+    val toks = dataManifestFileKeyTemplate.split("-")
+    path.startsWith(toks(0)) && path.endsWith(toks(toks.length - 1))
+  }
+
+  def isDeleteManifestFile(path: String): Boolean = {
+    val toks = deleteManifestFileKeyTemplate.split("-")
+    path.startsWith(toks(0)) && path.endsWith(toks(toks.length - 1))
   }
 }

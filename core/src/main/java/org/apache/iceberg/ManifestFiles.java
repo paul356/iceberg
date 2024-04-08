@@ -23,6 +23,7 @@ import com.github.benmanes.caffeine.cache.Caffeine;
 import java.io.IOException;
 import java.util.Map;
 import org.apache.iceberg.ManifestReader.FileType;
+import org.apache.iceberg.QDTreeSnapshot$;
 import org.apache.iceberg.avro.AvroEncoderUtil;
 import org.apache.iceberg.avro.AvroSchemaUtil;
 import org.apache.iceberg.exceptions.RuntimeIOException;
@@ -126,10 +127,15 @@ public class ManifestFiles {
         manifest.content() == ManifestContent.DATA,
         "Cannot read a delete manifest with a ManifestFileParser: %s",
         manifest);
-    InputFile file = newInputFile(io, manifest.path(), manifest.length());
-    InheritableMetadata inheritableMetadata = InheritableMetadataFactory.fromManifest(manifest);
-    return new ManifestReader<>(
-        file, manifest.partitionSpecId(), specsById, inheritableMetadata, FileType.DATA_FILES);
+    if (TableProperties.MANIFEST_IN_KVDB_DEFAULT &&
+        QDTreeSnapshot$.MODULE$.isDataManifestFile(manifest.path())) {
+      return new QDTreeManifestReader(manifest.path(), FileType.DATA_FILES);
+    } else {
+      InputFile file = newInputFile(io, manifest.path(), manifest.length());
+      InheritableMetadata inheritableMetadata = InheritableMetadataFactory.fromManifest(manifest);
+      return new ManifestReader<>(
+                                  file, manifest.partitionSpecId(), specsById, inheritableMetadata, FileType.DATA_FILES);
+    }
   }
 
   /**
@@ -381,7 +387,6 @@ public class ManifestFiles {
         CatalogProperties.IO_MANIFEST_CACHE_EXPIRATION_INTERVAL_MS,
         CatalogProperties.IO_MANIFEST_CACHE_EXPIRATION_INTERVAL_MS_DEFAULT);
   }
-
   static long cacheTotalBytes(FileIO io) {
     return PropertyUtil.propertyAsLong(
         io.properties(),

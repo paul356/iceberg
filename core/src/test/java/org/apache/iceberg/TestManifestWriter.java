@@ -115,7 +115,7 @@ public class TestManifestWriter extends TableTestBase {
     writer.close();
     ManifestFile manifest = writer.toManifestFile();
     Assert.assertEquals("Manifest should have no sequence number", -1L, manifest.sequenceNumber());
-    ManifestReader<DataFile> manifestReader = ManifestFiles.read(manifest, table.io());
+    ManifestFileParser<DataFile> manifestReader = ManifestFiles.read(manifest, table.io());
     for (ManifestEntry<DataFile> entry : manifestReader.entries()) {
       Assert.assertEquals(
           "Custom data sequence number should be used for all manifest entries",
