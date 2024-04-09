@@ -127,12 +127,12 @@ public class ManifestFiles {
         manifest.content() == ManifestContent.DATA,
         "Cannot read a delete manifest with a ManifestFileParser: %s",
         manifest);
+    InheritableMetadata inheritableMetadata = InheritableMetadataFactory.fromManifest(manifest);
     if (TableProperties.MANIFEST_IN_KVDB_DEFAULT &&
         QDTreeSnapshot$.MODULE$.isDataManifestFile(manifest.path())) {
-      return new QDTreeManifestReader(manifest.path(), FileType.DATA_FILES);
+      return new QDTreeManifestReader<DataFile>(manifest.path(), inheritableMetadata, FileType.DATA_FILES);
     } else {
       InputFile file = newInputFile(io, manifest.path(), manifest.length());
-      InheritableMetadata inheritableMetadata = InheritableMetadataFactory.fromManifest(manifest);
       return new ManifestReader<>(
                                   file, manifest.partitionSpecId(), specsById, inheritableMetadata, FileType.DATA_FILES);
     }

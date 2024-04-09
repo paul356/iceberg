@@ -7,6 +7,8 @@ import java.util.TreeMap
 import org.apache.iceberg.relocated.com.google.common.collect.Maps
 import scala.collection.mutable.Map
 
+import scala.jdk.CollectionConverters._
+
 object KeyType extends Enumeration {
   case class Domain(domainId: Int) extends super.Val {}
   import scala.language.implicitConversions
@@ -20,7 +22,7 @@ class MapKey(
   val version: Int = 1,
   val domain: KeyType.Domain,
   byteBuf: ByteBuffer,
-  val snapSequence: Long) {
+  val snapSequence: Long) extends Ordered[MapKey] {
   private val bytes = byteBuf.duplicate()
   bytes.rewind()
   def getBytes: ByteBuffer = {
@@ -28,9 +30,25 @@ class MapKey(
     res.rewind()
     res
   }
+
+  def compare(that: MapKey): Int = {
+    if (this eq that) {
+      return 0
+    }
+
+    MapKey.compareKeys(this, that)
+  }
+
+  override def equals(that: Any): Boolean = {
+    if (that == null || !that.isInstanceOf[MapKey]) {
+      return false
+    }
+
+    compare(that.asInstanceOf[MapKey]) == 0
+  }
 }
 
-object MapKey extends Comparator[MapKey] {
+object MapKey {
   private val comparators: Map[KeyType.Domain, (MapKey, MapKey, Boolean) => Int] = Map((KeyType.ByteArray, compareByteArray))
   private def compareByteArray(obj1: MapKey, obj2: MapKey, withSequence: Boolean): Int = {
     val cmp = obj1.bytes.compareTo(obj2.bytes)
@@ -41,7 +59,7 @@ object MapKey extends Comparator[MapKey] {
     }
   }
 
-  def compare(obj1: MapKey, obj2: MapKey): Int = {
+  def compareKeys(obj1: MapKey, obj2: MapKey): Int = {
     if (obj1.domain != obj2.domain) {
       obj1.domain.domainId - obj2.domain.domainId
     } else {
@@ -65,7 +83,7 @@ object MapKey extends Comparator[MapKey] {
 }
 
 class PersistentMap private {
-  private val impl: TreeMap[MapKey, ByteBuffer] = Maps.newTreeMap(MapKey)
+  private val impl: TreeMap[MapKey, ByteBuffer] = Maps.newTreeMap()
 
   def getVal(key: MapKey): ByteBuffer = {
     impl.get(key)
@@ -94,6 +112,46 @@ class PersistentMap private {
 
   def delete(key: MapKey): Unit = {
     impl.remove(key)
+  }
+
+  // key should be in the range of [startKey, endKey), and sequence is smaller than or equal to maxSequence
+  def iterator(startKey: Option[MapKey], endKey: Option[MapKey], maxSequence: Option[Long]): Iterator[MapKey] = {
+    new Iterator[MapKey] {
+      private var currKey = if (startKey.isEmpty) {
+        impl.firstKey()
+      } else {
+        impl.ceilingKey(startKey.get)
+      }
+
+      private def inRange(key: MapKey): Boolean = {
+        val checkEnd = if (!endKey.isEmpty) {
+          key < endKey.get
+        } else {
+          true
+        }
+
+        val checkSequence = if (!maxSequence.isEmpty) {
+          key.snapSequence < maxSequence.get || key.snapSequence == maxSequence.get
+        } else {
+          true
+        }
+
+        checkEnd && checkSequence
+      }
+
+      override def hasNext: Boolean = {
+        while (currKey != null && !inRange(currKey)) {
+          next()
+        }
+        currKey != null
+      }
+
+      override def next(): MapKey = {
+        val saveKey = currKey
+        currKey = impl.higherKey(saveKey)
+        saveKey
+      }
+    }
   }
 }
 
