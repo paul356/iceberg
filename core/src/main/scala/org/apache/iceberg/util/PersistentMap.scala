@@ -153,6 +153,11 @@ class PersistentMap private {
       }
     }
   }
+
+  // dreadful
+  def clear: Unit = {
+    impl.clear()
+  }
 }
 
 object PersistentMap {

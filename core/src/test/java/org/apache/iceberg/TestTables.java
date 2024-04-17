@@ -35,6 +35,7 @@ import org.apache.iceberg.metrics.MetricsReporter;
 import org.apache.iceberg.relocated.com.google.common.base.Preconditions;
 import org.apache.iceberg.relocated.com.google.common.collect.ImmutableMap;
 import org.apache.iceberg.relocated.com.google.common.collect.Maps;
+import org.apache.iceberg.util.PersistentMap$;
 
 public class TestTables {
 
@@ -198,6 +199,9 @@ public class TestTables {
     synchronized (METADATA) {
       METADATA.clear();
       VERSIONS.clear();
+    }
+    if (TableProperties.MANIFEST_IN_KVDB_DEFAULT) {
+      PersistentMap$.MODULE$.instance().clear();
     }
   }
 
