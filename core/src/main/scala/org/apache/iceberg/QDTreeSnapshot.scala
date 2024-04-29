@@ -38,11 +38,11 @@ class QDTreeSnapshot(
   val timestampMillis: Long,
   val operation: String,
   val summary: JMap[String, String],
-  val manifestListLocation: String,
-  override val schemaId: Integer) extends Snapshot {
+  override val schemaId: Integer,
+  val manifestListLocation: String) extends Snapshot {
 
   override def allManifests(io: FileIO): JList[ManifestFile] = {
-    dataManifests(io)
+    ManifestLists.read(io.newInputFile(manifestListLocation))
   }
 
   override def dataManifests(io: FileIO): JList[ManifestFile] = {

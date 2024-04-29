@@ -164,7 +164,10 @@ public class TableTestBase {
           .withFileSizeInBytes(350)
           .build();
 
-  static final FileIO FILE_IO = TableProperties.MANIFEST_IN_KVDB_DEFAULT ? QDTreeKvdbFileIO$.MODULE$ : new TestTables.LocalFileIO();
+  static final FileIO FILE_IO =
+      TableProperties.MANIFEST_IN_KVDB_DEFAULT
+          ? QDTreeKvdbFileIO$.MODULE$
+          : new TestTables.LocalFileIO();
 
   @Rule public TemporaryFolder temp = new TemporaryFolder();
 

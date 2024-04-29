@@ -29,6 +29,7 @@ import scala.util.Using
 class QDTreeManifestEntryWriter[T <: ContentFile[T]] private(
   val metaStore: PersistentMap,
   val snapshotId: JLong,
+  val sequenceNumber: Long,
   val content: ManifestContent,
   createFileWriter: (OutputFile) => ManifestWriter[T],
   createFileReader: (InputFile) => ManifestReader[T]) extends ManifestEntryAppender[T] {
@@ -95,6 +96,7 @@ class QDTreeManifestEntryWriter[T <: ContentFile[T]] private(
   }
 
   override def toManifestFiles: JList[ManifestFile] = {
+    writeKvdb
     List[ManifestFile](new GenericManifestFile(
       QDTreeSnapshot.dataManifestFileKey(snapshotId.longValue()),
       0,
@@ -116,7 +118,7 @@ class QDTreeManifestEntryWriter[T <: ContentFile[T]] private(
   override def close: Unit = {
   }
 
-  override def commit(sequenceNumber: Long): Unit = {
+  private def writeKvdb: Unit = {
     val readyBatch = writeBatch.foreach((pair) => {
       val newKey = new MapKey(pair._1.version, pair._1.domain, pair._1.getBytes, sequenceNumber)
       val outputFile = new QDTreeKvdbOutputFile(newKey, metaStore)
@@ -141,10 +143,11 @@ object QDTreeManifestEntryWriter {
     new MapKey(domain = CutSequence, byteBuf = byteBuffer, snapSequence = Long.MaxValue)
   }
 
-  def newDataWriter(metaStore: PersistentMap, version: Int, snapshotId: JLong): ManifestEntryAppender[DataFile] = {
+  def newDataWriter(metaStore: PersistentMap, version: Int, snapshotId: JLong, sequenceNumber: Long): ManifestEntryAppender[DataFile] = {
     new QDTreeManifestEntryWriter(
       metaStore,
       snapshotId,
+      sequenceNumber,
       ManifestContent.DATA,
       if (version < 2)
         new ManifestWriter.V1Writer(PartitionSpec.unpartitioned(), _, snapshotId)
@@ -152,13 +155,14 @@ object QDTreeManifestEntryWriter {
         new ManifestWriter.V2Writer(PartitionSpec.unpartitioned(), _, snapshotId),
       createOldManifestReader(_, snapshotId.longValue(), FileType.DATA_FILES))
   }
-  def newDeleteWriter(metaStore: PersistentMap, version: Int, snapshotId: JLong): ManifestEntryAppender[DeleteFile] = {
+  def newDeleteWriter(metaStore: PersistentMap, version: Int, snapshotId: JLong, sequenceNumber: Long): ManifestEntryAppender[DeleteFile] = {
     if (version < 2) {
       throw new IllegalArgumentException("not delete files for version < 2")
     }
     new QDTreeManifestEntryWriter(
       metaStore,
       snapshotId,
+      sequenceNumber,
       ManifestContent.DELETES,
       new ManifestWriter.V2DeleteWriter(PartitionSpec.unpartitioned(), _, snapshotId),
       createOldManifestReader(_, snapshotId.longValue(), FileType.DELETE_FILES))

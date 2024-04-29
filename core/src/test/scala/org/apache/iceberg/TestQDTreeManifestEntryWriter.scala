@@ -43,7 +43,7 @@ class TestQDTreeManifestEntryWriter {
 
     clearOldKey
 
-    val writer = QDTreeManifestEntryWriter.newDataWriter(metaStore, 2, snapshot)
+    val writer = QDTreeManifestEntryWriter.newDataWriter(metaStore, 1, snapshot, 2)
     val dataFile = new GenericDataFile(
       0,
       "file://first-file",
@@ -56,7 +56,7 @@ class TestQDTreeManifestEntryWriter {
       null,
       null)
     writer.add(dataFile)
-    writer.commit(1)
+    writer.toManifestFiles
   }
 
   @Test
@@ -66,7 +66,7 @@ class TestQDTreeManifestEntryWriter {
 
     clearOldKey
 
-    val writer1 = QDTreeManifestEntryWriter.newDataWriter(metaStore, 2, snapshot)
+    val writer1 = QDTreeManifestEntryWriter.newDataWriter(metaStore, 2, snapshot, 4)
     val dataFile1 = new GenericDataFile(
       0,
       "file://first-file",
@@ -91,10 +91,10 @@ class TestQDTreeManifestEntryWriter {
       null,
       null)
     writer1.add(dataFile2)
-    writer1.commit(1)
+    writer1.toManifestFiles
 
     val snapshot2 = JLong.valueOf(2)
-    val writer2 = QDTreeManifestEntryWriter.newDataWriter(metaStore, 2, snapshot2)
+    val writer2 = QDTreeManifestEntryWriter.newDataWriter(metaStore, 3, snapshot2, 5)
     val dataFile3 = new GenericDataFile(
       0,
       "file://third-file",
@@ -107,7 +107,7 @@ class TestQDTreeManifestEntryWriter {
       null,
       null)
     writer2.add(dataFile3)
-    writer2.commit(2)
+    writer2.toManifestFiles
 
     val entries = getAllSet
     assertTrue(entries.length == 3)

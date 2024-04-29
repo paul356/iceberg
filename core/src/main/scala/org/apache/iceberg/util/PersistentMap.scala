@@ -16,6 +16,7 @@ object KeyType extends Enumeration {
 
   val ByteArray   = Domain(0)
   val CutSequence = Domain(1)
+  val Butt        = Domain(2)
 }
 
 class MapKey(

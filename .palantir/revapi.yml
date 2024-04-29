@@ -838,6 +838,30 @@ acceptedBreaks:
     - code: "java.field.removedWithConstant"
       old: "field org.apache.iceberg.TableProperties.MERGE_CARDINALITY_CHECK_ENABLED_DEFAULT"
       justification: "Spark 3.1 has been dropped"
+    - code: "java.method.numberOfParametersChanged"
+      old: "method java.util.List<org.apache.iceberg.ManifestFile> org.apache.iceberg.BaseReplacePartitions::apply(org.apache.iceberg.TableMetadata,\
+        \ org.apache.iceberg.Snapshot)"
+      new: "method java.util.List<org.apache.iceberg.ManifestFile> org.apache.iceberg.BaseReplacePartitions::apply(org.apache.iceberg.TableMetadata,\
+        \ long, org.apache.iceberg.Snapshot)"
+      justification: "iceberg QDTree interface change"
+    - code: "java.method.numberOfParametersChanged"
+      old: "method java.util.List<org.apache.iceberg.ManifestFile> org.apache.iceberg.BaseRewriteManifests::apply(org.apache.iceberg.TableMetadata,\
+        \ org.apache.iceberg.Snapshot)"
+      new: "method java.util.List<org.apache.iceberg.ManifestFile> org.apache.iceberg.BaseRewriteManifests::apply(org.apache.iceberg.TableMetadata,\
+        \ long, org.apache.iceberg.Snapshot)"
+      justification: "iceberg QDTree interface change"
+    - code: "java.method.numberOfParametersChanged"
+      old: "method java.util.List<org.apache.iceberg.ManifestFile> org.apache.iceberg.MergingSnapshotProducer<ThisT>::apply(org.apache.iceberg.TableMetadata,\
+        \ org.apache.iceberg.Snapshot) @ org.apache.iceberg.BaseOverwriteFiles"
+      new: "method java.util.List<org.apache.iceberg.ManifestFile> org.apache.iceberg.MergingSnapshotProducer<ThisT>::apply(org.apache.iceberg.TableMetadata,\
+        \ long, org.apache.iceberg.Snapshot) @ org.apache.iceberg.BaseOverwriteFiles"
+      justification: "iceberg QDTree interface change"
+    - code: "java.method.numberOfParametersChanged"
+      old: "method java.util.List<org.apache.iceberg.ManifestFile> org.apache.iceberg.MergingSnapshotProducer<ThisT>::apply(org.apache.iceberg.TableMetadata,\
+        \ org.apache.iceberg.Snapshot) @ org.apache.iceberg.StreamingDelete"
+      new: "method java.util.List<org.apache.iceberg.ManifestFile> org.apache.iceberg.MergingSnapshotProducer<ThisT>::apply(org.apache.iceberg.TableMetadata,\
+        \ long, org.apache.iceberg.Snapshot) @ org.apache.iceberg.StreamingDelete"
+      justification: "iceberg QDTree interface change"
     - code: "java.method.removed"
       old: "method java.util.List<org.apache.iceberg.DataFile> org.apache.iceberg.MergingSnapshotProducer<ThisT>::addedFiles()\
         \ @ org.apache.iceberg.BaseOverwriteFiles"
@@ -862,6 +886,94 @@ acceptedBreaks:
       old: "method void org.apache.iceberg.MergingSnapshotProducer<ThisT>::setNewFilesSequenceNumber(long)\
         \ @ org.apache.iceberg.StreamingDelete"
       justification: "Removing deprecated code"
+    - code: "java.method.returnTypeChanged"
+      old: "method org.apache.iceberg.ManifestReader<org.apache.iceberg.DataFile>\
+        \ org.apache.iceberg.ManifestFiles::read(org.apache.iceberg.ManifestFile,\
+        \ org.apache.iceberg.io.FileIO)"
+      new: "method org.apache.iceberg.ManifestFileParser<org.apache.iceberg.DataFile>\
+        \ org.apache.iceberg.ManifestFiles::read(org.apache.iceberg.ManifestFile,\
+        \ org.apache.iceberg.io.FileIO)"
+      justification: "iceberg QDTree interface change"
+    - code: "java.method.returnTypeChanged"
+      old: "method org.apache.iceberg.ManifestReader<org.apache.iceberg.DataFile>\
+        \ org.apache.iceberg.ManifestFiles::read(org.apache.iceberg.ManifestFile,\
+        \ org.apache.iceberg.io.FileIO, java.util.Map<java.lang.Integer, org.apache.iceberg.PartitionSpec>)"
+      new: "method org.apache.iceberg.ManifestFileParser<org.apache.iceberg.DataFile>\
+        \ org.apache.iceberg.ManifestFiles::read(org.apache.iceberg.ManifestFile,\
+        \ org.apache.iceberg.io.FileIO, java.util.Map<java.lang.Integer, org.apache.iceberg.PartitionSpec>)"
+      justification: "iceberg QDTree interface change"
+    - code: "java.method.returnTypeChanged"
+      old: "method org.apache.iceberg.ManifestReader<org.apache.iceberg.DataFile>\
+        \ org.apache.iceberg.SnapshotProducer<ThisT>::newManifestReader(org.apache.iceberg.ManifestFile)\
+        \ @ org.apache.iceberg.BaseOverwriteFiles"
+      new: "method org.apache.iceberg.ManifestFileParser<org.apache.iceberg.DataFile>\
+        \ org.apache.iceberg.SnapshotProducer<ThisT>::newManifestReader(org.apache.iceberg.ManifestFile)\
+        \ @ org.apache.iceberg.BaseOverwriteFiles"
+      justification: "iceberg QDTree interface change"
+    - code: "java.method.returnTypeChanged"
+      old: "method org.apache.iceberg.ManifestReader<org.apache.iceberg.DataFile>\
+        \ org.apache.iceberg.SnapshotProducer<ThisT>::newManifestReader(org.apache.iceberg.ManifestFile)\
+        \ @ org.apache.iceberg.BaseReplacePartitions"
+      new: "method org.apache.iceberg.ManifestFileParser<org.apache.iceberg.DataFile>\
+        \ org.apache.iceberg.SnapshotProducer<ThisT>::newManifestReader(org.apache.iceberg.ManifestFile)\
+        \ @ org.apache.iceberg.BaseReplacePartitions"
+      justification: "iceberg QDTree interface change"
+    - code: "java.method.returnTypeChanged"
+      old: "method org.apache.iceberg.ManifestReader<org.apache.iceberg.DataFile>\
+        \ org.apache.iceberg.SnapshotProducer<ThisT>::newManifestReader(org.apache.iceberg.ManifestFile)\
+        \ @ org.apache.iceberg.BaseRewriteManifests"
+      new: "method org.apache.iceberg.ManifestFileParser<org.apache.iceberg.DataFile>\
+        \ org.apache.iceberg.SnapshotProducer<ThisT>::newManifestReader(org.apache.iceberg.ManifestFile)\
+        \ @ org.apache.iceberg.BaseRewriteManifests"
+      justification: "iceberg QDTree interface change"
+    - code: "java.method.returnTypeChanged"
+      old: "method org.apache.iceberg.ManifestReader<org.apache.iceberg.DataFile>\
+        \ org.apache.iceberg.SnapshotProducer<ThisT>::newManifestReader(org.apache.iceberg.ManifestFile)\
+        \ @ org.apache.iceberg.StreamingDelete"
+      new: "method org.apache.iceberg.ManifestFileParser<org.apache.iceberg.DataFile>\
+        \ org.apache.iceberg.SnapshotProducer<ThisT>::newManifestReader(org.apache.iceberg.ManifestFile)\
+        \ @ org.apache.iceberg.StreamingDelete"
+      justification: "iceberg QDTree interface change"
+    - code: "java.method.returnTypeChanged"
+      old: "method org.apache.iceberg.ManifestReader<org.apache.iceberg.DeleteFile>\
+        \ org.apache.iceberg.ManifestFiles::readDeleteManifest(org.apache.iceberg.ManifestFile,\
+        \ org.apache.iceberg.io.FileIO, java.util.Map<java.lang.Integer, org.apache.iceberg.PartitionSpec>)"
+      new: "method org.apache.iceberg.ManifestFileParser<org.apache.iceberg.DeleteFile>\
+        \ org.apache.iceberg.ManifestFiles::readDeleteManifest(org.apache.iceberg.ManifestFile,\
+        \ org.apache.iceberg.io.FileIO, java.util.Map<java.lang.Integer, org.apache.iceberg.PartitionSpec>)"
+      justification: "iceberg QDTree interface change"
+    - code: "java.method.returnTypeChanged"
+      old: "method org.apache.iceberg.ManifestReader<org.apache.iceberg.DeleteFile>\
+        \ org.apache.iceberg.SnapshotProducer<ThisT>::newDeleteManifestReader(org.apache.iceberg.ManifestFile)\
+        \ @ org.apache.iceberg.BaseOverwriteFiles"
+      new: "method org.apache.iceberg.ManifestFileParser<org.apache.iceberg.DeleteFile>\
+        \ org.apache.iceberg.SnapshotProducer<ThisT>::newDeleteManifestReader(org.apache.iceberg.ManifestFile)\
+        \ @ org.apache.iceberg.BaseOverwriteFiles"
+      justification: "iceberg QDTree interface change"
+    - code: "java.method.returnTypeChanged"
+      old: "method org.apache.iceberg.ManifestReader<org.apache.iceberg.DeleteFile>\
+        \ org.apache.iceberg.SnapshotProducer<ThisT>::newDeleteManifestReader(org.apache.iceberg.ManifestFile)\
+        \ @ org.apache.iceberg.BaseReplacePartitions"
+      new: "method org.apache.iceberg.ManifestFileParser<org.apache.iceberg.DeleteFile>\
+        \ org.apache.iceberg.SnapshotProducer<ThisT>::newDeleteManifestReader(org.apache.iceberg.ManifestFile)\
+        \ @ org.apache.iceberg.BaseReplacePartitions"
+      justification: "iceberg QDTree interface change"
+    - code: "java.method.returnTypeChanged"
+      old: "method org.apache.iceberg.ManifestReader<org.apache.iceberg.DeleteFile>\
+        \ org.apache.iceberg.SnapshotProducer<ThisT>::newDeleteManifestReader(org.apache.iceberg.ManifestFile)\
+        \ @ org.apache.iceberg.BaseRewriteManifests"
+      new: "method org.apache.iceberg.ManifestFileParser<org.apache.iceberg.DeleteFile>\
+        \ org.apache.iceberg.SnapshotProducer<ThisT>::newDeleteManifestReader(org.apache.iceberg.ManifestFile)\
+        \ @ org.apache.iceberg.BaseRewriteManifests"
+      justification: "iceberg QDTree interface change"
+    - code: "java.method.returnTypeChanged"
+      old: "method org.apache.iceberg.ManifestReader<org.apache.iceberg.DeleteFile>\
+        \ org.apache.iceberg.SnapshotProducer<ThisT>::newDeleteManifestReader(org.apache.iceberg.ManifestFile)\
+        \ @ org.apache.iceberg.StreamingDelete"
+      new: "method org.apache.iceberg.ManifestFileParser<org.apache.iceberg.DeleteFile>\
+        \ org.apache.iceberg.SnapshotProducer<ThisT>::newDeleteManifestReader(org.apache.iceberg.ManifestFile)\
+        \ @ org.apache.iceberg.StreamingDelete"
+      justification: "iceberg QDTree interface change"
     - code: "java.method.visibilityReduced"
       old: "method void org.apache.iceberg.encryption.Ciphers::<init>()"
       new: "method void org.apache.iceberg.encryption.Ciphers::<init>()"

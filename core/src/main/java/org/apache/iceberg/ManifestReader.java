@@ -51,7 +51,8 @@ import org.apache.iceberg.util.PartitionSet;
  *
  * @param <F> The Java class of files returned by this reader.
  */
-public class ManifestReader<F extends ContentFile<F>> extends CloseableGroup implements ManifestFileParser<F> {
+public class ManifestReader<F extends ContentFile<F>> extends CloseableGroup
+    implements ManifestFileParser<F> {
   static final ImmutableList<String> ALL_COLUMNS = ImmutableList.of("*");
 
   private static final Set<String> STATS_COLUMNS =

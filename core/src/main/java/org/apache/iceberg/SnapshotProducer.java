@@ -212,7 +212,8 @@ abstract class SnapshotProducer<ThisT> implements SnapshotUpdate<ThisT> {
    * @param snapshot snapshot to apply the changes to
    * @return a manifest list for the new snapshot.
    */
-  protected abstract List<ManifestFile> apply(TableMetadata metadataToUpdate, long sequenceNumber, Snapshot snapshot);
+  protected abstract List<ManifestFile> apply(
+      TableMetadata metadataToUpdate, long sequenceNumber, Snapshot snapshot);
 
   @Override
   public Snapshot apply() {
@@ -252,15 +253,27 @@ abstract class SnapshotProducer<ThisT> implements SnapshotUpdate<ThisT> {
       throw new RuntimeIOException(e, "Failed to write manifest list file");
     }
 
-    return new BaseSnapshot(
-        sequenceNumber,
-        snapshotId(),
-        parentSnapshotId,
-        System.currentTimeMillis(),
-        operation(),
-        summary(base),
-        base.currentSchemaId(),
-        manifestList.location());
+    if (false) {
+      return new QDTreeSnapshot(
+          sequenceNumber,
+          snapshotId(),
+          parentSnapshotId,
+          System.currentTimeMillis(),
+          operation(),
+          summary(base),
+          base.currentSchemaId(),
+          manifestList.location());
+    } else {
+      return new BaseSnapshot(
+          sequenceNumber,
+          snapshotId(),
+          parentSnapshotId,
+          System.currentTimeMillis(),
+          operation(),
+          summary(base),
+          base.currentSchemaId(),
+          manifestList.location());
+    }
   }
 
   protected abstract Map<String, String> summary();

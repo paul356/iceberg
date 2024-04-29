@@ -18,10 +18,9 @@
  */
 package org.apache.iceberg;
 
+import static org.apache.iceberg.TableProperties.MANIFEST_IN_KVDB_DEFAULT;
 import static org.apache.iceberg.TableProperties.SNAPSHOT_ID_INHERITANCE_ENABLED;
 import static org.apache.iceberg.TableProperties.SNAPSHOT_ID_INHERITANCE_ENABLED_DEFAULT;
-import static org.apache.iceberg.TableProperties.MANIFEST_IN_KVDB;
-import static org.apache.iceberg.TableProperties.MANIFEST_IN_KVDB_DEFAULT;
 
 import java.io.IOException;
 import java.util.List;
@@ -54,7 +53,6 @@ class FastAppend extends SnapshotProducer<AppendFiles> implements AppendFiles {
   private final List<ManifestFile> rewrittenAppendManifests = Lists.newArrayList();
   private List<ManifestFile> newManifests = null;
   private boolean hasNewFiles = false;
-  private boolean manifestInKvdb = false;
 
   FastAppend(String tableName, TableOperations ops) {
     super(ops);
@@ -65,7 +63,6 @@ class FastAppend extends SnapshotProducer<AppendFiles> implements AppendFiles {
         ops.current()
             .propertyAsBoolean(
                 SNAPSHOT_ID_INHERITANCE_ENABLED, SNAPSHOT_ID_INHERITANCE_ENABLED_DEFAULT);
-    this.manifestInKvdb = MANIFEST_IN_KVDB_DEFAULT;
   }
 
   @Override
@@ -205,7 +202,8 @@ class FastAppend extends SnapshotProducer<AppendFiles> implements AppendFiles {
     }
   }
 
-  private List<ManifestFile> writeNewManifests(TableMetadata base, long sequenceNumber) throws IOException {
+  private List<ManifestFile> writeNewManifests(TableMetadata base, long sequenceNumber)
+      throws IOException {
     if (hasNewFiles && newManifests != null) {
       newManifests.forEach(file -> deleteFile(file.path()));
       newManifests = null;
@@ -213,8 +211,13 @@ class FastAppend extends SnapshotProducer<AppendFiles> implements AppendFiles {
 
     if (newManifests == null && newFiles.size() > 0) {
       ManifestEntryAppender<DataFile> writer;
-      if (manifestInKvdb) {
-        writer = QDTreeManifestEntryWriter.newDataWriter(PersistentMap$.MODULE$.instance(), ops.current().formatVersion(), snapshotId());
+      if (MANIFEST_IN_KVDB_DEFAULT) {
+        writer =
+            QDTreeManifestEntryWriter.newDataWriter(
+                PersistentMap$.MODULE$.instance(),
+                ops.current().formatVersion(),
+                snapshotId(),
+                sequenceNumber);
       } else {
         writer = newRollingManifestWriter(spec);
       }
@@ -226,8 +229,6 @@ class FastAppend extends SnapshotProducer<AppendFiles> implements AppendFiles {
 
       this.newManifests = writer.toManifestFiles();
       hasNewFiles = false;
-
-      writer.commit(sequenceNumber);
     }
 
     return newManifests;
