@@ -30,7 +30,7 @@ import org.apache.iceberg.io.FileIO;
 import org.apache.iceberg.io.InputFile;
 import org.apache.iceberg.io.LocationProvider;
 import org.apache.iceberg.io.OutputFile;
-import org.apache.iceberg.io.QDTreeKvdbFileIO$;
+import org.apache.iceberg.io.QDTreeKvdbFileIO;
 import org.apache.iceberg.metrics.MetricsReporter;
 import org.apache.iceberg.relocated.com.google.common.base.Preconditions;
 import org.apache.iceberg.relocated.com.google.common.collect.ImmutableMap;
@@ -283,7 +283,7 @@ public class TestTables {
     @Override
     public FileIO io() {
       if (TableProperties.MANIFEST_IN_KVDB_DEFAULT) {
-        return QDTreeKvdbFileIO$.MODULE$;
+        return new QDTreeKvdbFileIO(new LocalFileIO());
       } else {
         return new LocalFileIO();
       }

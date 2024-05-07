@@ -11,20 +11,21 @@ import scala.jdk.CollectionConverters._
 
 class TestByteArrayInputOutput {
   val writeKey = "bytearrayiokey"
+  val fileIO = new QDTreeKvdbFileIO(null)
 
   @Before
   def setUp: Unit = {
-    QDTreeKvdbFileIO.deleteFile(writeKey)
+    fileIO.deleteFile(writeKey)
   }
 
   @After
   def tearDown: Unit = {
-    QDTreeKvdbFileIO.deleteFile(writeKey)
+    fileIO.deleteFile(writeKey)
   }
 
   @Test
   def testByteArrayOutput: Unit = {
-    val outputFile = QDTreeKvdbFileIO.newOutputFile(writeKey)
+    val outputFile = fileIO.newOutputFile(writeKey)
     val positionOutputStream = outputFile.create
     positionOutputStream.write(Array[Byte]('1', '2', '3'))
     positionOutputStream.write('a')
@@ -34,7 +35,7 @@ class TestByteArrayInputOutput {
 
     positionOutputStream.close()
 
-    val inputFile = QDTreeKvdbFileIO.newInputFile(writeKey)
+    val inputFile = fileIO.newInputFile(writeKey)
     val inputStream = inputFile.newStream
 
     val byteArr = Array[Byte]('1', '2', '3', 'a', 'b', 'c', '4', '5', '6')

@@ -12,15 +12,16 @@ import org.junit.After
 
 class TestWriteManifestFileToByteArray {
   val writeKey = "manifestfilekey"
+  val fileIO = new QDTreeKvdbFileIO(null)
 
   @Before
   def setUp: Unit = {
-    QDTreeKvdbFileIO.deleteFile(writeKey)
+    fileIO.deleteFile(writeKey)
   }
 
   @After
   def tearDown: Unit = {
-    QDTreeKvdbFileIO.deleteFile(writeKey)
+    fileIO.deleteFile(writeKey)
   }
 
   @Test
@@ -41,14 +42,14 @@ class TestWriteManifestFileToByteArray {
       0L,
       null,
       null)
-    val outputFile = QDTreeKvdbFileIO.newOutputFile(writeKey)
+    val outputFile = fileIO.newOutputFile(writeKey)
 
     val writer = ManifestLists.write(2, outputFile, 1, 0, 1)
 
     writer.add(testManifestFile)
     writer.close()
 
-    val inputFile = QDTreeKvdbFileIO.newInputFile(writeKey)
+    val inputFile = fileIO.newInputFile(writeKey)
     val manifestFile = ManifestLists.read(inputFile).get(0)
 
     assertTrue(manifestFile.path() == "@ByteArray")

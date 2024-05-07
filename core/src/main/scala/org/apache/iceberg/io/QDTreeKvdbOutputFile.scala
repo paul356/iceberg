@@ -10,7 +10,7 @@ import org.apache.iceberg.util.MapKey
 import org.apache.iceberg.util.PersistentMap
 import scala.jdk.CollectionConverters._
 
-class QDTreeKvdbOutputFile(path: MapKey, metaStore: PersistentMap) extends OutputFile {
+class QDTreeKvdbOutputFile(path: MapKey, @transient metaStore: PersistentMap) extends OutputFile {
   class ByteBufferPositionOutputStream extends PositionOutputStream {
     private var offset: Long = 0
     private var closed = false

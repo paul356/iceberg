@@ -9,7 +9,7 @@ import org.apache.iceberg.util.MapKey
 import org.apache.iceberg.util.PersistentMap
 import scala.jdk.CollectionConverters._
 
-class QDTreeKvdbInputFile(path: MapKey, metaStore: PersistentMap) extends InputFile {
+class QDTreeKvdbInputFile(path: MapKey, @transient metaStore: PersistentMap) extends InputFile {
   private lazy val kvValue = {
     val returnKey = metaStore.getValWithSequenceFallback(path)
     if (returnKey == null) {

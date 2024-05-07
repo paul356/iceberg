@@ -22,14 +22,28 @@ object KeyType extends Enumeration {
 class MapKey(
   val version: Int = 1,
   val domain: KeyType.Domain,
-  byteBuf: ByteBuffer,
-  val snapSequence: Long) extends Ordered[MapKey] {
-  private val bytes = byteBuf.duplicate()
+  @transient byteBuf: ByteBuffer,
+  val snapSequence: Long) extends Ordered[MapKey] with java.io.Serializable {
+  @transient private var bytes = byteBuf.duplicate()
   bytes.rewind()
   def getBytes: ByteBuffer = {
     val res = bytes.duplicate()
     res.rewind()
     res
+  }
+
+  private def writeObject(out: java.io.ObjectOutputStream): Unit = {
+    out.defaultWriteObject()
+    out.writeInt(bytes.capacity())
+    out.write(bytes.array())
+  }
+
+  private def readObject(in: java.io.ObjectInputStream): Unit = {
+    in.defaultReadObject()
+    val arrSize = in.readInt()
+    val buf = Array.ofDim[Byte](arrSize)
+    in.read(buf, 0, arrSize)
+    bytes = ByteBuffer.wrap(buf, 0, arrSize)
   }
 
   def compare(that: MapKey): Int = {
