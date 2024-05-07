@@ -18,6 +18,8 @@
  */
 package org.apache.iceberg.hadoop;
 
+import static org.apache.iceberg.TableProperties.MANIFEST_IN_KVDB_DEFAULT;
+
 import java.io.Closeable;
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -112,10 +114,14 @@ public class HadoopCatalog extends BaseMetastoreCatalog
     this.fs = Util.getFs(new Path(warehouseLocation), conf);
 
     String fileIOImpl = properties.get(CatalogProperties.FILE_IO_IMPL);
-    this.fileIO =
-        fileIOImpl == null
-            ? new HadoopFileIO(conf)
-            : CatalogUtil.loadFileIO(fileIOImpl, properties, conf);
+    if (MANIFEST_IN_KVDB_DEFAULT) {
+      this.fileIO = org.apache.iceberg.io.QDTreeKvdbFileIO$.MODULE$;
+    } else {
+      this.fileIO =
+          fileIOImpl == null
+              ? new HadoopFileIO(conf)
+              : CatalogUtil.loadFileIO(fileIOImpl, properties, conf);
+    }
 
     this.lockManager = LockManagers.from(properties);
 

@@ -18,6 +18,7 @@
  */
 package org.apache.iceberg;
 
+import static org.apache.iceberg.TableProperties.MANIFEST_IN_KVDB_DEFAULT;
 import static org.apache.iceberg.TableProperties.MANIFEST_MIN_MERGE_COUNT;
 import static org.apache.iceberg.TableProperties.MANIFEST_MIN_MERGE_COUNT_DEFAULT;
 import static org.apache.iceberg.TableProperties.MANIFEST_TARGET_SIZE_BYTES;
@@ -53,6 +54,7 @@ import org.apache.iceberg.relocated.com.google.common.collect.Sets;
 import org.apache.iceberg.util.CharSequenceSet;
 import org.apache.iceberg.util.Pair;
 import org.apache.iceberg.util.PartitionSet;
+import org.apache.iceberg.util.PersistentMap$;
 import org.apache.iceberg.util.SnapshotUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -816,8 +818,31 @@ abstract class MergingSnapshotProducer<ThisT> extends SnapshotProducer<ThisT> {
     return summaryBuilder.build();
   }
 
-  @Override
-  public List<ManifestFile> apply(TableMetadata base, long sequenceNumber, Snapshot snapshot) {
+  private List<ManifestFile> writeManifestToKVDB(TableMetadata base, long sequenceNumber) {
+    if (hasNewDataFiles && cachedNewDataManifests != null) {
+      cachedNewDataManifests.forEach(file -> deleteFile(file.path()));
+      cachedNewDataManifests = null;
+    }
+
+    if (cachedNewDataManifests == null && hasNewDataFiles) {
+      ManifestEntryAppender<DataFile> writer =
+          QDTreeManifestEntryWriter.newDataWriter(
+              PersistentMap$.MODULE$.instance(),
+              base.formatVersion(),
+              snapshotId(),
+              sequenceNumber);
+
+      newDataFiles.forEach(writer::add);
+
+      cachedNewDataManifests = writer.toManifestFiles();
+      hasNewDataFiles = false;
+    }
+
+    return cachedNewDataManifests;
+  }
+
+  private List<ManifestFile> writeManifestToFile(
+      TableMetadata base, long sequenceNumber, Snapshot snapshot) {
     // filter any existing manifests
     List<ManifestFile> filtered =
         filterManager.filterManifests(
@@ -861,6 +886,15 @@ abstract class MergingSnapshotProducer<ThisT> extends SnapshotProducer<ThisT> {
     Iterables.addAll(manifests, deleteMergeManager.mergeManifests(unmergedDeleteManifests));
 
     return manifests;
+  }
+
+  @Override
+  public List<ManifestFile> apply(TableMetadata base, long sequenceNumber, Snapshot snapshot) {
+    if (MANIFEST_IN_KVDB_DEFAULT) {
+      return writeManifestToFile(base, sequenceNumber, snapshot);
+    } else {
+      return writeManifestToKVDB(base, sequenceNumber);
+    }
   }
 
   @Override
